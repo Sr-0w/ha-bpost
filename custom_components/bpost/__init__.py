@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
 import logging
+from pathlib import Path
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.helpers.typing import ConfigType
 
 from .const import CONF_APP_LANG, CONF_PASSWORD, CONF_USERNAME, DEFAULT_SCAN_MINUTES, DOMAIN
 from .coordinator import BpostDataUpdateCoordinator
@@ -18,6 +21,25 @@ from .pybpost.const import X_API_KEY
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.SENSOR, Platform.DEVICE_TRACKER]
+
+CARD_URL = "/bpost_card/bpost-parcels-card.js"
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up the bpost integration (serve the Lovelace card)."""
+    try:
+        from homeassistant.components import frontend
+        from homeassistant.components.http import StaticPathConfig
+
+        base = Path(__file__).parent
+        version = json.loads((base / "manifest.json").read_text())["version"]
+        await hass.http.async_register_static_paths(
+            [StaticPathConfig(CARD_URL.rsplit("/", 1)[0], str(base / "frontend"), True)]
+        )
+        frontend.add_extra_js_url(hass, f"{CARD_URL}?v={version}")
+    except Exception as err:  # never break setup for the card
+        _LOGGER.warning("Bpost parcels card not registered: %s", err)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

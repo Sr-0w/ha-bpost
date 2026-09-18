@@ -22,6 +22,7 @@ no manual tokens: just your email and password.
 - Events for automations: `bpost_new_package`, `bpost_status_changed`,
   `bpost_out_for_delivery`, `bpost_delivered`
 - UI setup (FR / NL / EN / DE), re-authentication flow, redacted diagnostics
+- Generic Lovelace card with tracking timelines (theme-aware, EN/FR/NL/DE)
 
 ## Installation (HACS)
 
@@ -50,6 +51,25 @@ that `custom_components/bpost/manifest.json` lands in your Home Assistant
 
 Polling defaults to every 10 minutes. Automations can trigger on the
 `bpost_*` events above (payloads carry the parcel code and statuses).
+
+## Lovelace card
+
+The integration ships a generic parcels card (auto-registered, no manual
+resource needed). It follows the default Home Assistant theme as well as
+any theme applied to the card, and is available in the card picker as
+**Bpost Parcels**:
+
+```yaml
+type: custom:bpost-parcels-card
+title: Parcels
+show_history: true # also list delivered parcels (default: false)
+```
+
+| Default theme | Themed card |
+|---|---|
+| ![Bpost Parcels card, default theme](images/card-default.png) | ![Bpost Parcels card, themed](images/card-themed.png) |
+
+*(Screenshots rendered with fictional demo data.)*
 
 ## About the client key
 

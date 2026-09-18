@@ -63,6 +63,7 @@ class ManifestTest(unittest.TestCase):
             self.assertIn(key, manifest, f"missing manifest key: {key}")
         self.assertEqual(manifest["domain"], "bpost")
         self.assertTrue(manifest["config_flow"])
+        self.assertIn("frontend", manifest.get("dependencies", []))
 
     def test_version_format(self):
         manifest = json.loads((INTEGRATION / "manifest.json").read_text())
@@ -95,6 +96,27 @@ class HacsTest(unittest.TestCase):
         keys = list(manifest)
         self.assertEqual(keys[:2], ["domain", "name"])
         self.assertEqual(keys[2:], sorted(keys[2:]))
+
+
+class CardTest(unittest.TestCase):
+    CARD = INTEGRATION / "frontend" / "bpost-parcels-card.js"
+
+    def test_card_shipped(self):
+        text = self.CARD.read_text(encoding="utf-8")
+        self.assertIn("bpost-parcels-card", text)
+        self.assertIn("customCards", text)
+        self.assertIn("getStubConfig", text)
+
+    def test_card_theme_safe(self):
+        """No hardcoded colors or fonts: everything via HA CSS variables."""
+        import re
+
+        text = self.CARD.read_text(encoding="utf-8")
+        no_fallbacks = text
+        for _ in range(3):  # nested var() fallbacks
+            no_fallbacks = re.sub(r"var\([^()]*\)", "var()", no_fallbacks)
+        self.assertNotRegex(no_fallbacks, r"#[0-9a-fA-F]{3,8}\b")
+        self.assertNotIn("font-family", no_fallbacks)
 
 
 class TranslationsTest(unittest.TestCase):
