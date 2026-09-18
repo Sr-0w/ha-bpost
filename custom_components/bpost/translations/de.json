@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "My bpost-Konto",
+        "description": "Melde dich mit deiner My bpost E-Mail-Adresse und deinem Passwort an. Pakete deines Kontos werden automatisch erkannt.",
+        "data": {
+          "username": "E-Mail",
+          "password": "Passwort",
+          "app_lang": "Sprache"
+        }
+      },
+      "reauth_confirm": {
+        "title": "My bpost erneut anmelden",
+        "description": "Deine My bpost-Sitzung ist abgelaufen. Gib dein Passwort erneut ein.",
+        "data": {
+          "password": "Passwort"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ungültige E-Mail oder ungültiges Passwort.",
+      "cannot_connect": "My bpost-Dienst nicht erreichbar."
+    },
+    "abort": {
+      "already_configured": "Dieses Konto ist bereits konfiguriert."
+    }
+  }
+}

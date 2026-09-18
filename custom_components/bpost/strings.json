@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "My bpost account",
+        "description": "Log in with your My bpost email and password. Parcels linked to your account are discovered automatically.",
+        "data": {
+          "username": "Email",
+          "password": "Password",
+          "app_lang": "Language"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate My bpost",
+        "description": "Your My bpost session expired. Enter your password again.",
+        "data": {
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email or password.",
+      "cannot_connect": "Cannot reach the My bpost service."
+    },
+    "abort": {
+      "already_configured": "This account is already configured."
+    }
+  }
+}

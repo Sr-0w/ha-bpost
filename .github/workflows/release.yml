@@ -1,0 +1,65 @@
+name: Release
+
+# Builds the HACS asset when a GitHub release is published:
+#  1. vendors pybpost/ into custom_components/bpost/pybpost/
+#  2. injects the x-api-key from the BPOST_X_API_KEY repository secret
+#     (the key is NEVER committed to source)
+#  3. checks manifest.json version matches the release tag
+#  4. uploads bpost.zip to the release
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vendor pybpost
+        run: |
+          cp -r pybpost/pybpost custom_components/bpost/pybpost
+          find custom_components -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true
+
+      - name: Inject x-api-key
+        env:
+          BPOST_X_API_KEY: ${{ secrets.BPOST_X_API_KEY }}
+        run: |
+          python3 - <<'EOF'
+          import os
+          path = "custom_components/bpost/pybpost/const.py"
+          text = open(path, encoding="utf-8").read()
+          key = os.environ.get("BPOST_X_API_KEY", "").strip()
+          assert len(key) == 40, f"unexpected key length: {len(key)}"
+          assert "REPLACE_ME_AT_DEPLOY_TIME" in text, "placeholder missing"
+          open(path, "w", encoding="utf-8").write(
+              text.replace("REPLACE_ME_AT_DEPLOY_TIME", key))
+          print("key injected")
+          EOF
+
+      - name: Check manifest version matches tag
+        run: |
+          python3 - <<'EOF'
+          import json, os
+          tag = os.environ["TAG"].lstrip("v")
+          manifest = json.load(open("custom_components/bpost/manifest.json"))
+          assert manifest["version"] == tag, (
+              f"manifest {manifest['version']} != tag {tag}")
+          print(f"version {tag} OK")
+          EOF
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+
+      - name: Build bpost.zip
+        run: |
+          rm -rf dist && mkdir dist
+          cp -r custom_components dist/
+          cd dist && zip -qr ../bpost.zip custom_components
+          cd .. && unzip -l bpost.zip | head -20
+
+      - name: Upload asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.event.release.tag_name }} bpost.zip --clobber

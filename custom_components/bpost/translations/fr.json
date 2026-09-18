@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Compte My bpost",
+        "description": "Connectez-vous avec votre e-mail et mot de passe My bpost. Les colis liés à votre compte sont découverts automatiquement.",
+        "data": {
+          "username": "E-mail",
+          "password": "Mot de passe",
+          "app_lang": "Langue"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Ré-authentifier My bpost",
+        "description": "Votre session My bpost a expiré. Saisissez à nouveau votre mot de passe.",
+        "data": {
+          "password": "Mot de passe"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "E-mail ou mot de passe invalide.",
+      "cannot_connect": "Service My bpost injoignable."
+    },
+    "abort": {
+      "already_configured": "Ce compte est déjà configuré."
+    }
+  }
+}

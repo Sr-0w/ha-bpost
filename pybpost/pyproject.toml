@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pybpost"
+version = "0.1.0"
+description = "Async client for the My bpost account API (unofficial)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = ["aiohttp>=3.9"]
+
+[tool.setuptools.packages.find]
+include = ["pybpost*"]
