@@ -1,7 +1,7 @@
 name: Release
 
 # Builds the HACS asset when a GitHub release is published:
-#  1. vendors pybpost/ into custom_components/bpost/pybpost/
+#  1. vendors pybpost/ into custom_components/my_bpost/pybpost/
 #     (the generic x-api-key is embedded in source)
 #  2. checks manifest.json version matches the release tag
 #  3. uploads bpost.zip to the release
@@ -19,14 +19,14 @@ jobs:
 
       - name: Vendor pybpost
         run: |
-          cp -r pybpost/pybpost custom_components/bpost/pybpost
+          cp -r pybpost/pybpost custom_components/my_bpost/pybpost
           find custom_components -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true
 
       - name: Check embedded x-api-key
         run: |
           python3 - <<'EOF'
           import re
-          text = open("custom_components/bpost/pybpost/const.py").read()
+          text = open("custom_components/my_bpost/pybpost/const.py").read()
           assert "REPLACE_ME" not in text, "placeholder key in release!"
           key = re.search(r'X_API_KEY = "([^"]+)"', text).group(1)
           assert len(key) == 40, f"unexpected key length: {len(key)}"
@@ -38,7 +38,7 @@ jobs:
           python3 - <<'EOF'
           import json, os
           tag = os.environ["TAG"].lstrip("v")
-          manifest = json.load(open("custom_components/bpost/manifest.json"))
+          manifest = json.load(open("custom_components/my_bpost/manifest.json"))
           assert manifest["version"] == tag, (
               f"manifest {manifest['version']} != tag {tag}")
           print(f"version {tag} OK")

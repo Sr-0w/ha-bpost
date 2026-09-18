@@ -38,7 +38,7 @@ no manual tokens: just your email and password.
 
 Download `bpost.zip` from the
 [latest release](https://github.com/Sr-0w/ha-bpost/releases), extract it so
-that `custom_components/bpost/manifest.json` lands in your Home Assistant
+that `custom_components/my_bpost/manifest.json` lands in your Home Assistant
 `config` directory, then restart.
 
 ## Entities
@@ -96,7 +96,7 @@ release is published — please open an
 ## Development
 
 ```text
-custom_components/bpost/   # integration (config flow, coordinator, platforms)
+custom_components/my_bpost/   # integration (config flow, coordinator, platforms)
 pybpost/                   # standalone async client (source of truth)
 scripts/extract_key.py     # re-derive the x-api-key from the official app lib
 tests/                     # packaging guards (manifest, hacs.json, no key leak)
@@ -105,7 +105,7 @@ tests/                     # packaging guards (manifest, hacs.json, no key leak)
 `pybpost/` is vendored into the release asset by
 `.github/workflows/release.yml`, which also checks that `manifest.json`
 matches the release tag. To cut a release: bump `version` in
-`custom_components/bpost/manifest.json` (and `pybpost/pyproject.toml`),
+`custom_components/my_bpost/manifest.json` (and `pybpost/pyproject.toml`),
 push, then publish a GitHub release tagged `vX.Y.Z` — CI attaches
 `bpost.zip` automatically. If bpost rotated the key, re-extract it first
 with `scripts/extract_key.py` against the current app release.
