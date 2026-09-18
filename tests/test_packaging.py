@@ -3,8 +3,7 @@
 Run:  python3 -m unittest discover -s tests -v
 
 These tests protect the HACS distribution contract:
-- the bpost client key must NEVER be committed to source (it is injected
-  from a GitHub secret when the release asset is built);
+- the generic bpost client key ships embedded in source (never a placeholder);
 - manifest.json / hacs.json keep the metadata HACS and Home Assistant require;
 - shipped JSON files stay valid.
 """
@@ -21,11 +20,16 @@ INTEGRATION = ROOT / "custom_components" / "bpost"
 
 
 class SourceHygieneTest(unittest.TestCase):
-    def test_no_api_key_in_source(self):
-        """The x-api-key placeholder must survive in source (never the key)."""
+    def test_embedded_api_key_well_formed(self):
+        """The generic x-api-key ships in source; never a placeholder."""
+        import re
+
         const = ROOT / "pybpost" / "pybpost" / "const.py"
         text = const.read_text(encoding="utf-8")
-        self.assertIn('X_API_KEY = "REPLACE_ME_AT_DEPLOY_TIME"', text)
+        self.assertNotIn("REPLACE_ME", text)
+        match = re.search(r'X_API_KEY = "([^"]+)"', text)
+        self.assertIsNotNone(match)
+        self.assertEqual(len(match.group(1)), 40)
 
     def test_no_vendored_copy_in_source(self):
         """pybpost is vendored at release time, not committed twice."""

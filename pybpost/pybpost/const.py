@@ -14,11 +14,11 @@ OS_NAME = "android"
 OS_VERSION = "14"
 
 # Client key for the AWS API Gateway usage plan (``x-api-key`` header).
-# This is bpost's proprietary client credential, obfuscated inside the
-# official app (native lib, see scripts/extract_key.py). It is deliberately
-# NOT stored here: inject it at build/deploy time. The client refuses to
-# run with the placeholder value.
-X_API_KEY = "REPLACE_ME_AT_DEPLOY_TIME"
+# This is bpost's generic application key, identical in every install of
+# the official app (shipped, obfuscated, inside its native lib — see
+# scripts/extract_key.py). It identifies the app, not the user. If bpost
+# rotates it, re-extract from the current app release and cut a new release.
+X_API_KEY = "iBLz8oTy8K1KAnPZJLltU527bWmLt6XQ6y8RF5hT"
 
 #: List ``Status`` values considered terminal (parcel journey finished).
 #: Best effort from live data + app resources; refine with live traffic.

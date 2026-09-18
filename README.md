@@ -54,9 +54,9 @@ Polling defaults to every 10 minutes. Automations can trigger on the
 ## About the client key
 
 The bpost backend requires a client key (`x-api-key`) on every call. This
-repository never stores it: the release asset is built by CI, which injects
-the key from a maintainer secret. You only ever enter your email and
-password.
+is bpost's **generic application key** — the same value ships, obfuscated,
+in every install of the official app, so it is embedded directly in this
+integration. You only ever enter your email and password.
 
 If bpost rotates the key or ships an incompatible app update, the
 integration will report an authentication/connection error until a new
@@ -74,11 +74,12 @@ tests/                     # packaging guards (manifest, hacs.json, no key leak)
 ```
 
 `pybpost/` is vendored into the release asset by
-`.github/workflows/release.yml`, which also injects the key and checks that
-`manifest.json` matches the release tag. To cut a release: bump
-`version` in `custom_components/bpost/manifest.json` (and
-`pybpost/pyproject.toml`), push, then publish a GitHub release tagged
-`vX.Y.Z` — CI attaches `bpost.zip` automatically.
+`.github/workflows/release.yml`, which also checks that `manifest.json`
+matches the release tag. To cut a release: bump `version` in
+`custom_components/bpost/manifest.json` (and `pybpost/pyproject.toml`),
+push, then publish a GitHub release tagged `vX.Y.Z` — CI attaches
+`bpost.zip` automatically. If bpost rotated the key, re-extract it first
+with `scripts/extract_key.py` against the current app release.
 
 ## License
 
