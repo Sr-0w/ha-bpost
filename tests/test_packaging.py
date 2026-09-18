@@ -75,8 +75,17 @@ class HacsTest(unittest.TestCase):
         hacs = json.loads((ROOT / "hacs.json").read_text())
         self.assertFalse(hacs["content_in_root"])
         self.assertEqual(hacs["filename"], "bpost.zip")
-        self.assertIn("sensor", hacs["domains"])
-        self.assertIn("device_tracker", hacs["domains"])
+        self.assertEqual(hacs["iot_class"], "cloud_polling")
+
+    def test_manifest_key_order(self):
+        """Hassfest requires domain, name, then alphabetical order."""
+        manifest = json.loads(
+            (INTEGRATION / "manifest.json").read_text(),
+            object_pairs_hook=dict,
+        )
+        keys = list(manifest)
+        self.assertEqual(keys[:2], ["domain", "name"])
+        self.assertEqual(keys[2:], sorted(keys[2:]))
 
 
 class TranslationsTest(unittest.TestCase):
