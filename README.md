@@ -76,9 +76,11 @@ show_history: true # also list delivered parcels (default: false)
 Version 0.2.0 renames the integration domain from `bpost` to `my_bpost`
 so it coexists with other bpost integrations. To migrate: remove the old
 **bpost** config entry, update to 0.2.0, restart, then add **My bpost**
-again with your email + password. Entity IDs (`sensor.my_bpost_*`) stay
-the same; update automations to the `my_bpost_*` events and dashboards
-to `custom:my-bpost-parcels-card`.
+again with your email + password. Entity IDs (`sensor.my_bpost_*`) are
+usually preserved, but a few parcel IDs may be regenerated from bpost's
+current name data — update anything referencing exact parcel entity IDs.
+Automations must switch to the `my_bpost_*` events and dashboards to
+`custom:my-bpost-parcels-card`.
 
 ## About the client key
 
