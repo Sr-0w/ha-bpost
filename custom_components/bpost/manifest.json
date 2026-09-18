@@ -3,7 +3,7 @@
   "name": "My bpost",
   "codeowners": ["@Sr-0w"],
   "config_flow": true,
-  "dependencies": ["frontend"],
+  "dependencies": ["frontend", "http"],
   "documentation": "https://github.com/Sr-0w/ha-bpost",
   "integration_type": "service",
   "iot_class": "cloud_polling",
