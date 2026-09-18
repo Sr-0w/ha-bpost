@@ -75,7 +75,12 @@ class HacsTest(unittest.TestCase):
         hacs = json.loads((ROOT / "hacs.json").read_text())
         self.assertFalse(hacs["content_in_root"])
         self.assertEqual(hacs["filename"], "bpost.zip")
-        self.assertEqual(hacs["iot_class"], "cloud_polling")
+        # hacs/action rejects HA-manifest keys here (iot_class, domains…).
+        self.assertTrue(
+            set(hacs).isdisjoint(
+                {"iot_class", "domains", "codeowners", "config_flow", "version"}
+            )
+        )
 
     def test_manifest_key_order(self):
         """Hassfest requires domain, name, then alphabetical order."""
