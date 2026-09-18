@@ -1,4 +1,4 @@
-"""Sensor platform for the bpost integration."""
+"""Sensor platform for the My bpost integration."""
 
 from __future__ import annotations
 

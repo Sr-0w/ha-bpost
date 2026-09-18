@@ -16,7 +16,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-INTEGRATION = ROOT / "custom_components" / "bpost"
+INTEGRATION = ROOT / "custom_components" / "my_bpost"
 
 
 class SourceHygieneTest(unittest.TestCase):
@@ -61,7 +61,7 @@ class ManifestTest(unittest.TestCase):
             "iot_class",
         ):
             self.assertIn(key, manifest, f"missing manifest key: {key}")
-        self.assertEqual(manifest["domain"], "bpost")
+        self.assertEqual(manifest["domain"], "my_bpost")
         self.assertTrue(manifest["config_flow"])
         self.assertIn("frontend", manifest.get("dependencies", []))
 
@@ -99,11 +99,11 @@ class HacsTest(unittest.TestCase):
 
 
 class CardTest(unittest.TestCase):
-    CARD = INTEGRATION / "frontend" / "bpost-parcels-card.js"
+    CARD = INTEGRATION / "frontend" / "my-bpost-parcels-card.js"
 
     def test_card_shipped(self):
         text = self.CARD.read_text(encoding="utf-8")
-        self.assertIn("bpost-parcels-card", text)
+        self.assertIn("my-bpost-parcels-card", text)
         self.assertIn("customCards", text)
         self.assertIn("getStubConfig", text)
 

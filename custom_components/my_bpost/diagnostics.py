@@ -1,4 +1,4 @@
-"""Diagnostics for the bpost integration (personal data redacted)."""
+"""Diagnostics for the My bpost integration (personal data redacted)."""
 
 from __future__ import annotations
 

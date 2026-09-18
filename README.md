@@ -19,8 +19,8 @@ no manual tokens: just your email and password.
   plus a `sensor.my_bpost_packages` counter
 - `device_tracker` entities when bpost provides coordinates
 - Full per-parcel history with timestamps (attributes)
-- Events for automations: `bpost_new_package`, `bpost_status_changed`,
-  `bpost_out_for_delivery`, `bpost_delivered`
+- Events for automations: `my_bpost_new_package`, `my_bpost_status_changed`,
+  `my_bpost_out_for_delivery`, `my_bpost_delivered`
 - UI setup (FR / NL / EN / DE), re-authentication flow, redacted diagnostics
 - Generic Lovelace card with tracking timelines (theme-aware, EN/FR/NL/DE)
 
@@ -50,7 +50,7 @@ that `custom_components/bpost/manifest.json` lands in your Home Assistant
 | `device_tracker.my_bpost_<sender>` | Present when coordinates are available |
 
 Polling defaults to every 10 minutes. Automations can trigger on the
-`bpost_*` events above (payloads carry the parcel code and statuses).
+`my_bpost_*` events above (payloads carry the parcel code and statuses).
 
 ## Lovelace card
 
@@ -60,7 +60,7 @@ any theme applied to the card, and is available in the card picker as
 **Bpost Parcels**:
 
 ```yaml
-type: custom:bpost-parcels-card
+type: custom:my-bpost-parcels-card
 title: Parcels
 show_history: true # also list delivered parcels (default: false)
 ```
@@ -70,6 +70,15 @@ show_history: true # also list delivered parcels (default: false)
 | ![Bpost Parcels card, default theme](images/card-default.png) | ![Bpost Parcels card, themed](images/card-themed.png) |
 
 *(Screenshots rendered with fictional demo data.)*
+
+## Migrating from 0.1.x (domain rename)
+
+Version 0.2.0 renames the integration domain from `bpost` to `my_bpost`
+so it coexists with other bpost integrations. To migrate: remove the old
+**bpost** config entry, update to 0.2.0, restart, then add **My bpost**
+again with your email + password. Entity IDs (`sensor.my_bpost_*`) stay
+the same; update automations to the `my_bpost_*` events and dashboards
+to `custom:my-bpost-parcels-card`.
 
 ## About the client key
 

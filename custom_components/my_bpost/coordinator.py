@@ -1,4 +1,4 @@
-"""Data coordinator for the bpost integration."""
+"""Data coordinator for the My bpost integration."""
 
 from __future__ import annotations
 

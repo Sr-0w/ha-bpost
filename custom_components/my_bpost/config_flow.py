@@ -1,4 +1,4 @@
-"""Config flow for the bpost integration."""
+"""Config flow for the My bpost integration."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ _LANGUAGES = ["fr", "nl", "en", "de"]
 
 
 class BpostConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for bpost."""
+    """Handle a config flow for My bpost."""
 
     VERSION = 1
 
@@ -43,7 +43,7 @@ class BpostConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
             else:
                 return self.async_create_entry(
-                    title=f"bpost ({email})",
+                    title=f"My bpost ({email})",
                     data={
                         CONF_USERNAME: email,
                         CONF_PASSWORD: user_input[CONF_PASSWORD],

@@ -1,6 +1,6 @@
 /* Bpost Parcels — generic Lovelace card for the My bpost integration.
  *
- * Type: custom:bpost-parcels-card
+ * Type: custom:my-bpost-parcels-card
  * Options:
  *   title         Card title (default: localized "Parcels")
  *   show_history  Include delivered/inactive parcels (default: false)
@@ -143,7 +143,7 @@ const CSS = `
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 `;
 
-class BpostParcelsCard extends HTMLElement {
+class MyBpostParcelsCard extends HTMLElement {
   setConfig(config) {
     if (!config) throw new Error("Invalid configuration");
     this._config = { show_history: false, ...config };
@@ -236,14 +236,14 @@ class BpostParcelsCard extends HTMLElement {
   }
 }
 
-if (!customElements.get("bpost-parcels-card")) {
-  customElements.define("bpost-parcels-card", BpostParcelsCard);
+if (!customElements.get("my-bpost-parcels-card")) {
+  customElements.define("my-bpost-parcels-card", MyBpostParcelsCard);
 }
 
 window.customCards = window.customCards || [];
-if (!window.customCards.some((c) => c.type === "bpost-parcels-card")) {
+if (!window.customCards.some((c) => c.type === "my-bpost-parcels-card")) {
   window.customCards.push({
-    type: "bpost-parcels-card",
+    type: "my-bpost-parcels-card",
     name: "Bpost Parcels",
     description: "Parcels linked to your My bpost account, with tracking timelines.",
     preview: true,

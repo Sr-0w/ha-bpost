@@ -22,11 +22,11 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.SENSOR, Platform.DEVICE_TRACKER]
 
-CARD_URL = "/bpost_card/bpost-parcels-card.js"
+CARD_URL = "/my_bpost_card/my-bpost-parcels-card.js"
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the bpost integration (serve the Lovelace card)."""
+    """Set up the My bpost integration (serve the Lovelace card)."""
     try:
         from homeassistant.components import frontend
         from homeassistant.components.http import StaticPathConfig
@@ -43,7 +43,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up bpost from a config entry."""
+    """Set up My bpost from a config entry."""
     from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
     client = BpostClient(

@@ -1,4 +1,4 @@
-"""Device tracker platform for the bpost integration.
+"""Device tracker platform for the My bpost integration.
 
 One tracker per parcel that has coordinates (pickup/delivery point today,
 live courier position once the live-tracking poll is wired). The native map
