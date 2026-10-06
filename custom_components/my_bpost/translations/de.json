@@ -2,12 +2,11 @@
   "config": {
     "step": {
       "user": {
-        "title": "My bpost-Konto",
-        "description": "Melde dich mit deiner My bpost E-Mail-Adresse und deinem Passwort an. Pakete deines Kontos werden automatisch erkannt.",
-        "data": {
-          "username": "E-Mail",
-          "password": "Passwort",
-          "app_lang": "Sprache"
+        "title": "Trackingquelle wählen",
+        "menu_options": {
+          "account": "My bpost-Konto",
+          "tracking": "Paket ohne Konto verfolgen",
+          "bulk": "Mehrere Pakete hinzufügen"
         }
       },
       "reauth_confirm": {
@@ -16,14 +15,190 @@
         "data": {
           "password": "Passwort"
         }
+      },
+      "account": {
+        "title": "My bpost-Konto",
+        "description": "Melde dich mit deiner My bpost E-Mail-Adresse und deinem Passwort an. Pakete deines Kontos werden automatisch erkannt.",
+        "data": {
+          "username": "E-Mail",
+          "password": "Passwort",
+          "app_lang": "Sprache"
+        }
+      },
+      "tracking": {
+        "title": "Öffentliche Paketverfolgung",
+        "description": "Barcode und Zustellpostleitzahl eingeben. Jeder Eintrag verfolgt ein Paket; ein My bpost-Konto ist nicht nötig.",
+        "data": {
+          "barcode": "Barcode",
+          "postal_code": "Zustellpostleitzahl",
+          "label": "Optionaler Name",
+          "app_lang": "Sprache",
+          "group": "Gruppe",
+          "direction": "Richtung"
+        }
+      },
+      "bulk": {
+        "title": "Mehrere Pakete hinzufügen",
+        "description": "Einen Barcode pro Zeile einfügen (maximal 20). Postleitzahl und Gruppe gelten für alle Zeilen. Gültige Pakete werden hinzugefügt, Duplikate übersprungen.",
+        "data": {
+          "barcodes": "Barcodes",
+          "postal_code": "Zustellpostleitzahl",
+          "group": "Gruppe",
+          "app_lang": "Sprache"
+        }
       }
     },
     "error": {
       "invalid_auth": "Ungültige E-Mail oder ungültiges Passwort.",
-      "cannot_connect": "My bpost-Dienst nicht erreichbar."
+      "cannot_connect": "My bpost-Dienst nicht erreichbar.",
+      "invalid_tracking": "Gültigen Barcode und gültige Postleitzahl eingeben.",
+      "tracking_not_found": "Kein Paket gefunden. Barcode und Zustellpostleitzahl prüfen; ein neues Versandetikett ist möglicherweise noch nicht sichtbar.",
+      "invalid_bulk": "1 bis 20 Barcodes eingeben.",
+      "rate_limited": "bpost fordert eine Pause. Später erneut versuchen."
     },
     "abort": {
-      "already_configured": "Dieses Konto ist bereits konfiguriert."
+      "already_configured": "Dieses Konto oder Paket ist bereits eingerichtet.",
+      "bulk_complete": "Hinzugefügt: {added}. Bereits eingerichtet: {existing}. Fehlgeschlagene Zeilen: {failed}. Barcode und Postleitzahl prüfen oder später erneut versuchen."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tracking-Optionen",
+        "description": "Prüft geeignete Lieferungen höchstens einmal pro Minute, mit maximal zwei Anfragen pro Konto und Minute.",
+        "data": {
+          "enable_live_tracking": "Live-Verfolgung des Zustellers aktivieren",
+          "retention_days": "Inaktive Pakete aufbewahren in Tagen (1–365)",
+          "enable_mail": "Mail Ahead aktivieren",
+          "enable_mail_images": "Briefbilder aktivieren",
+          "group": "Gruppe",
+          "eta_change_minutes": "Mindeständerung des Lieferzeitfensters für Meldung (Minuten)"
+        },
+        "data_description": {
+          "enable_mail_images": "Bilder werden erst beim Ansehen geladen. Umschläge können Namen und Adressen enthalten."
+        }
+      },
+      "tracking_options": {
+        "title": "Paketoptionen",
+        "description": "Zustellpostleitzahl oder Namen ändern. Diesen Integrationseintrag löschen, um die Paketverfolgung zu beenden.",
+        "data": {
+          "postal_code": "Zustellpostleitzahl",
+          "label": "Optionaler Name",
+          "direction": "Richtung",
+          "retention_days": "Inaktive Pakete aufbewahren (1–365 Tage)",
+          "group": "Gruppe",
+          "eta_change_minutes": "Mindeständerung des Lieferzeitfensters für Meldung (Minuten)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ungültige E-Mail oder ungültiges Passwort.",
+      "cannot_connect": "My bpost-Dienst nicht erreichbar.",
+      "invalid_tracking": "Gültigen Barcode und gültige Postleitzahl eingeben.",
+      "tracking_not_found": "Kein Paket gefunden. Barcode und Zustellpostleitzahl prüfen; ein neues Versandetikett ist möglicherweise noch nicht sichtbar.",
+      "rate_limited": "bpost fordert eine Pause. Später erneut versuchen."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "parcel": {
+        "state": {
+          "unknown": "Unbekannt",
+          "registered": "Angekündigt",
+          "in_transit": "Unterwegs",
+          "out_for_delivery": "In Zustellung",
+          "at_pickup_point": "Abholbereit",
+          "delivered": "Zugestellt",
+          "returning": "Rücksendung unterwegs",
+          "returned": "An Absender zurückgesendet",
+          "problem": "Zustellproblem"
+        }
+      },
+      "mail_status": {
+        "name": "Mail Ahead-Status",
+        "state": {
+          "available": "Verfügbar",
+          "not_subscribed": "Nicht abonniert",
+          "not_eligible": "Nicht berechtigt",
+          "unknown": "Unbekannt",
+          "disabled": "Deaktiviert"
+        }
+      },
+      "mail_count": {
+        "name": "Briefe (30 Tage)"
+      },
+      "health": {
+        "name": "Trackingzustand",
+        "state": {
+          "starting": "Wird gestartet",
+          "ok": "Aktuell",
+          "auth_required": "Erneut anmelden",
+          "rate_limited": "API-Limit erreicht",
+          "maintenance": "bpost-Wartung",
+          "outdated_client": "Update erforderlich",
+          "not_found": "Paket nicht gefunden",
+          "service_unavailable": "Dienst nicht verfügbar"
+        }
+      }
+    },
+    "calendar": {
+      "deliveries": {
+        "name": "Lieferungen"
+      }
+    },
+    "image": {
+      "mail_image": {
+        "name": "Brief · {date}"
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "new_package": "Neues Paket",
+      "status_changed": "Paketstatus geändert",
+      "out_for_delivery": "Paket in Zustellung",
+      "delivered": "Paket zugestellt",
+      "at_pickup_point": "Paket abholbereit",
+      "returned": "Paket an Absender zurückgesandt",
+      "problem": "Zustellproblem",
+      "eta_changed": "Voraussichtliches Lieferzeitfenster geändert",
+      "letter_announced": "Neuer Brief angekündigt"
+    }
+  },
+  "services": {
+    "track_parcels": {
+      "name": "Pakete verfolgen",
+      "description": "Bis zu 20 manuelle Pakete hinzufügen, mit einem Ergebnis pro Zeile.",
+      "fields": {
+        "parcels": {
+          "name": "Pakete",
+          "description": "Liste von 1–20 Objekten mit barcode und postal_code; label, group, direction und app_lang sind optional."
+        }
+      }
+    },
+    "untrack_parcels": {
+      "name": "Paketverfolgung beenden",
+      "description": "Nur die ausgewählten manuellen Einträge entfernen.",
+      "fields": {
+        "entry_ids": {
+          "name": "Eintrags-IDs",
+          "description": "IDs manueller Einträge aus track_parcels; Konten werden abgelehnt."
+        }
+      }
+    },
+    "get_summary": {
+      "name": "Paketübersicht",
+      "description": "Pakete ohne Duplikate in der Home-Assistant-Zeitzone zählen.",
+      "fields": {
+        "entry_id": {
+          "name": "Eintrag (optional)",
+          "description": "Zusammenfassung auf einen Integrationseintrag begrenzen."
+        },
+        "group": {
+          "name": "Gruppe",
+          "description": "Exakter lokaler Gruppenname; leer umfasst alle Gruppen."
+        }
+      }
     }
   }
 }

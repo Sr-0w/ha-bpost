@@ -12,8 +12,12 @@ from __future__ import annotations
 
 import json
 import re
+import tempfile
 import unittest
 from pathlib import Path
+from zipfile import ZipFile
+
+from scripts.build_release import build_release
 
 ROOT = Path(__file__).resolve().parent.parent
 INTEGRATION = ROOT / "custom_components" / "my_bpost"
@@ -67,7 +71,7 @@ class ManifestTest(unittest.TestCase):
 
     def test_version_format(self):
         manifest = json.loads((INTEGRATION / "manifest.json").read_text())
-        self.assertRegex(manifest["version"], r"^\d+\.\d+\.\d+$")
+        self.assertRegex(manifest["version"], r"^\d+\.\d+\.\d+(?:b[1-9]\d*)?$")
 
     def test_repo_urls_point_at_ha_bpost(self):
         manifest = json.loads((INTEGRATION / "manifest.json").read_text())
@@ -80,6 +84,7 @@ class HacsTest(unittest.TestCase):
         hacs = json.loads((ROOT / "hacs.json").read_text())
         self.assertFalse(hacs["content_in_root"])
         self.assertEqual(hacs["filename"], "bpost.zip")
+        self.assertTrue(hacs["zip_release"])
         # hacs/action rejects HA-manifest keys here (iot_class, domains…).
         self.assertTrue(
             set(hacs).isdisjoint(
@@ -96,6 +101,43 @@ class HacsTest(unittest.TestCase):
         keys = list(manifest)
         self.assertEqual(keys[:2], ["domain", "name"])
         self.assertEqual(keys[2:], sorted(keys[2:]))
+
+    def test_declared_minimum_is_the_tested_home_assistant_version(self):
+        minimum = json.loads((ROOT / "hacs.json").read_text())["homeassistant"]
+        requirements = (ROOT / "requirements-dev.txt").read_text().splitlines()
+        self.assertIn(f"homeassistant=={minimum}", requirements)
+
+
+class ReleaseArchiveTest(unittest.TestCase):
+    def test_self_contained_reproducible_hacs_archive(self):
+        with tempfile.TemporaryDirectory() as temp:
+            first, second = Path(temp) / "first.zip", Path(temp) / "second.zip"
+            build_release(first)
+            build_release(second)
+            self.assertEqual(first.read_bytes(), second.read_bytes())
+            with ZipFile(first) as archive:
+                names = archive.namelist()
+                self.assertEqual(len(names), len(set(names)))
+                for required in ("manifest.json", "config_flow.py", "image.py", "calendar.py",
+                                 "pybpost/client.py", "pybpost/mail.py", "pybpost/status.py",
+                                 "frontend/my-bpost-parcels-card.js", "translations/fr.json", "brand/icon.png", "LICENSE"):
+                    self.assertIn(required, names)
+                for name in names:
+                    self.assertNotIn("..", Path(name).parts)
+                    self.assertFalse(name.startswith(("/", "custom_components/", "tests/", ".")))
+                    self.assertNotIn("__pycache__", name)
+                    self.assertNotIn(Path(name).suffix, (".pyc", ".env"))
+                    if name.endswith(".yaml"):
+                        self.assertEqual(name,"services.yaml")
+                self.assertIsNone(archive.testzip())
+            self.assertFalse((INTEGRATION / "pybpost").exists())
+
+    def test_tag_mismatch_refuses_to_write(self):
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "bpost.zip"
+            with self.assertRaises(ValueError):
+                build_release(output, tag="v999.0.0")
+            self.assertFalse(output.exists())
 
 
 class CardTest(unittest.TestCase):

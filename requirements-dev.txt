@@ -1,0 +1,18 @@
+# Home Assistant integration tests use this known, Python 3.13 compatible release.
+homeassistant==2026.2.3
+home-assistant-frontend==20260128.6
+colorlog==6.10.1
+# Native Companion app action imports cloud/camera/stream modules in HA 2026.2.
+# These are test dependencies; the integration itself adds no requirements.
+PyNaCl==1.6.2
+hass-nabucasa==1.12.0
+openai==2.15.0
+PyTurboJPEG==1.8.0
+av==16.0.1
+numpy==2.3.2
+hassil==3.5.0
+home-assistant-intents==2026.1.28
+pymicro-vad==1.0.1
+pyspeex-noise==1.0.2
+mutagen==1.47.0
+ha-ffmpeg==3.2.2

@@ -2,12 +2,11 @@
   "config": {
     "step": {
       "user": {
-        "title": "My bpost account",
-        "description": "Log in with your My bpost email and password. Parcels linked to your account are discovered automatically.",
-        "data": {
-          "username": "Email",
-          "password": "Password",
-          "app_lang": "Language"
+        "title": "Choose tracking source",
+        "menu_options": {
+          "account": "My bpost account",
+          "tracking": "Track a parcel without an account",
+          "bulk": "Add several parcels"
         }
       },
       "reauth_confirm": {
@@ -16,14 +15,190 @@
         "data": {
           "password": "Password"
         }
+      },
+      "account": {
+        "title": "My bpost account",
+        "description": "Log in with your My bpost email and password. Parcels linked to your account are discovered automatically.",
+        "data": {
+          "username": "Email",
+          "password": "Password",
+          "app_lang": "Language"
+        }
+      },
+      "tracking": {
+        "title": "Public parcel tracking",
+        "description": "Enter the barcode and delivery postal code. One parcel is added per entry; no My bpost account is required.",
+        "data": {
+          "barcode": "Barcode",
+          "postal_code": "Delivery postal code",
+          "label": "Optional name",
+          "app_lang": "Language",
+          "group": "Group",
+          "direction": "Direction"
+        }
+      },
+      "bulk": {
+        "title": "Add several parcels",
+        "description": "Paste one barcode per line (maximum 20). The postal code and group apply to every line. Valid parcels are added; duplicates are skipped.",
+        "data": {
+          "barcodes": "Barcodes",
+          "postal_code": "Delivery postal code",
+          "group": "Group",
+          "app_lang": "Language"
+        }
       }
     },
     "error": {
       "invalid_auth": "Invalid email or password.",
-      "cannot_connect": "Cannot reach the My bpost service."
+      "cannot_connect": "Cannot reach the My bpost service.",
+      "invalid_tracking": "Enter a valid barcode and postal code.",
+      "tracking_not_found": "No parcel found. Check the barcode and delivery postal code; a new label may not be visible yet.",
+      "invalid_bulk": "Enter between 1 and 20 barcodes.",
+      "rate_limited": "bpost requested a pause. Try again later."
     },
     "abort": {
-      "already_configured": "This account is already configured."
+      "already_configured": "This account or parcel is already configured.",
+      "bulk_complete": "Added: {added}. Already configured: {existing}. Failed rows: {failed}. Check their barcode and postal code, or try again later."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tracking options",
+        "description": "Checks eligible deliveries at most once per minute, with a limit of two requests per account per minute.",
+        "data": {
+          "enable_live_tracking": "Enable live courier tracking",
+          "retention_days": "Days to keep inactive parcels (1–365)",
+          "enable_mail": "Enable Mail Ahead",
+          "enable_mail_images": "Enable letter images",
+          "group": "Group",
+          "eta_change_minutes": "Minimum delivery-window change to notify (minutes)"
+        },
+        "data_description": {
+          "enable_mail_images": "Images are fetched only when viewed. Envelope scans can contain names and addresses."
+        }
+      },
+      "tracking_options": {
+        "title": "Parcel options",
+        "description": "Edit the delivery postal code or display name. Remove this integration entry to stop tracking the parcel.",
+        "data": {
+          "postal_code": "Delivery postal code",
+          "label": "Optional name",
+          "direction": "Direction",
+          "retention_days": "Days to keep inactive parcels (1–365)",
+          "group": "Group",
+          "eta_change_minutes": "Minimum delivery-window change to notify (minutes)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email or password.",
+      "cannot_connect": "Cannot reach the My bpost service.",
+      "invalid_tracking": "Enter a valid barcode and postal code.",
+      "tracking_not_found": "No parcel found. Check the barcode and delivery postal code; a new label may not be visible yet.",
+      "rate_limited": "bpost requested a pause. Try again later."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "parcel": {
+        "state": {
+          "unknown": "Unknown",
+          "registered": "Registered",
+          "in_transit": "In transit",
+          "out_for_delivery": "Out for delivery",
+          "at_pickup_point": "Ready to collect",
+          "delivered": "Delivered",
+          "returning": "Returning",
+          "returned": "Returned to sender",
+          "problem": "Delivery problem"
+        }
+      },
+      "mail_status": {
+        "name": "Mail Ahead status",
+        "state": {
+          "available": "Available",
+          "not_subscribed": "Not subscribed",
+          "not_eligible": "Not eligible",
+          "unknown": "Unknown",
+          "disabled": "Disabled"
+        }
+      },
+      "mail_count": {
+        "name": "Letters (30 days)"
+      },
+      "health": {
+        "name": "Tracking health",
+        "state": {
+          "starting": "Starting",
+          "ok": "Up to date",
+          "auth_required": "Sign in again",
+          "rate_limited": "API limit reached",
+          "maintenance": "bpost maintenance",
+          "outdated_client": "Update required",
+          "not_found": "Parcel not found",
+          "service_unavailable": "Service unavailable"
+        }
+      }
+    },
+    "calendar": {
+      "deliveries": {
+        "name": "Deliveries"
+      }
+    },
+    "image": {
+      "mail_image": {
+        "name": "Letter · {date}"
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "new_package": "New parcel",
+      "status_changed": "Parcel status changed",
+      "out_for_delivery": "Parcel out for delivery",
+      "delivered": "Parcel delivered",
+      "at_pickup_point": "Parcel ready to collect",
+      "returned": "Parcel returned to sender",
+      "problem": "Delivery problem",
+      "eta_changed": "Estimated delivery window changed",
+      "letter_announced": "New letter announced"
+    }
+  },
+  "services": {
+    "track_parcels": {
+      "name": "Track parcels",
+      "description": "Add up to 20 manual parcels and return a result per row.",
+      "fields": {
+        "parcels": {
+          "name": "Parcels",
+          "description": "List of 1–20 objects with barcode and postal_code; optional label, group, direction and app_lang."
+        }
+      }
+    },
+    "untrack_parcels": {
+      "name": "Stop tracking parcels",
+      "description": "Remove only the selected manual entries.",
+      "fields": {
+        "entry_ids": {
+          "name": "Entry IDs",
+          "description": "IDs of manual entries returned by track_parcels; account entries are refused."
+        }
+      }
+    },
+    "get_summary": {
+      "name": "Parcel summary",
+      "description": "Count parcels without duplicates in the Home Assistant time zone.",
+      "fields": {
+        "entry_id": {
+          "name": "Entry (optional)",
+          "description": "Limit the summary to one integration entry."
+        },
+        "group": {
+          "name": "Group",
+          "description": "Exact local group name; empty includes every group."
+        }
+      }
     }
   }
 }

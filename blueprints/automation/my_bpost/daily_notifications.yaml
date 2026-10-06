@@ -1,0 +1,76 @@
+blueprint:
+  name: My bpost · Daily digest and pickup reminder
+  description: >-
+    One private daily summary across accounts and manual parcels, with duplicates
+    removed. Requires My bpost 0.8.0b1+. Pickup reminders use the reported ready-to-collect
+    status; no collection deadline is invented. No names, barcodes or scan links
+    are sent. Counts exclude unavailable parcels and report their number separately.
+  domain: automation
+  homeassistant:
+    min_version: 2026.2.3
+  input:
+    notify_device:
+      name: Phone or tablet
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+    send_at:
+      name: Daily time (Home Assistant time zone)
+      default: "08:00:00"
+      selector:
+        time: {}
+    pickup_only:
+      name: Only remind when a parcel is ready to collect
+      default: false
+      selector:
+        boolean: {}
+    group:
+      name: Group (empty for all parcels)
+      default: ""
+      selector:
+        text: {}
+    language:
+      name: Language
+      default: fr
+      selector:
+        select:
+          options: [fr, en, nl, de]
+    dashboard_path:
+      name: Dashboard to open
+      default: /lovelace
+      selector:
+        text: {}
+mode: single
+triggers:
+  - trigger: time
+    at: !input send_at
+variables:
+  language: !input language
+  pickup_only: !input pickup_only
+  texts:
+    fr: ["Prévus aujourd’hui", "À retirer", "À résoudre", "Statut indisponible"]
+    en: ["Expected today", "Ready to collect", "Needs attention", "Status unavailable"]
+    nl: ["Vandaag verwacht", "Af te halen", "Aandacht nodig", "Status niet beschikbaar"]
+    de: ["Heute erwartet", "Abzuholen", "Handlungsbedarf", "Status nicht verfügbar"]
+actions:
+  - action: my_bpost.get_summary
+    data:
+      group: !input group
+    response_variable: parcels
+  - condition: template
+    value_template: >-
+      {{ parcels.pickup > 0 if pickup_only else
+         (parcels.today + parcels.pickup + parcels.problem + parcels.unavailable) > 0 }}
+  - device_id: !input notify_device
+    domain: mobile_app
+    type: notify
+    title: My bpost
+    message: >-
+      {% set t = texts.get(language, texts['en']) %}
+      {{ t[0] }}: {{ parcels.today }} · {{ t[1] }}: {{ parcels.pickup }} ·
+      {{ t[2] }}: {{ parcels.problem }} · {{ t[3] }}: {{ parcels.unavailable }}
+    data:
+      tag: my-bpost-daily
+      url: !input dashboard_path
+      clickAction: !input dashboard_path

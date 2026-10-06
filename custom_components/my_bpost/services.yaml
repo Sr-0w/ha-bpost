@@ -1,0 +1,24 @@
+track_parcels:
+  fields:
+    parcels:
+      required: true
+      example: [{barcode: "EXAMPLE", postal_code: "1000", label: "Books", group: "Home"}]
+      selector:
+        object: {}
+untrack_parcels:
+  fields:
+    entry_ids:
+      required: true
+      selector:
+        select:
+          multiple: true
+          custom_value: true
+          options: []
+get_summary:
+  fields:
+    entry_id:
+      selector:
+        text: {}
+    group:
+      selector:
+        text: {}
