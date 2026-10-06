@@ -1,4 +1,9 @@
-# Daily workflows (0.8.0)
+# Daily workflows
+
+[Documentation](README.md) · [Project overview](../README.md)
+
+For blueprint installation, see [notifications](notifications.md). For visual
+card configuration, see the [dashboard guide](dashboard.md).
 
 ## Matching parcels across sources
 

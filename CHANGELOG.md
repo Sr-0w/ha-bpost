@@ -1,83 +1,61 @@
-# Release notes
+# Changelog
 
-## 0.8.0b2 — beta
+Published changes, newest first. Installation and migration steps live in the
+[upgrade guide](docs/installation.md#upgrading); detailed behavior is in the
+[documentation](docs/README.md).
 
-- Restore the saved Mail Ahead baseline before the first poll. Letters arriving
-  while HA is stopped now announce once after startup; existing letters remain
-  silent. Mail outages during startup still leave parcel tracking available.
-- Add native reload/removal checks for account and public coordinators: timers
-  and listeners stop, stale refreshes do not poll, public HTTP sessions close,
-  and the shared HA session stays open. HA 2026.2.3 already invokes the registered
-  shutdown callbacks, so no duplicate unload shutdown call is added.
+## [0.8.0b2](https://github.com/Sr-0w/ha-bpost/releases/tag/v0.8.0b2) — 2026-10-06
 
-## 0.8.0b1 — beta
+### Fixed
 
-Minimum Home Assistant: **2026.2.3**. HA 2025.1 fails to register admin services
-with responses; HACS now prevents installing this release on that version.
-The beta is opt-in and includes all unreleased improvements below since 0.2.0.
+- Load the saved Mail Ahead announcement history before the first poll, so letters
+  arriving while the integration is stopped are announced once after restart.
+- Preserve that history through startup mail outages while keeping parcel tracking
+  available.
 
-- Deduplicate exact barcodes across account/manual sources in the card, summaries
-  and grouped alerts, with available/fresh source selection and stable tie breaks.
-- Group parcel updates over 30 seconds, persist announcement baselines and apply
-  a configurable material-ETA threshold. Add private daily/pickup reminders.
-- Import up to 20 manual parcels, assign groups and use admin HA actions for
-  addition/removal. Return partial results and protect account entries.
-- Add a Today card view with problems, pickups and due deliveries in HA local time.
-- Add readable diagnostic health with explicit auth, rate-limit and outage states,
-  last-success/retry timestamps and optional-feature capabilities.
+### Validation
 
-Replace existing parcel blueprint copies and reload automations to adopt grouped
-alerts; use one all-sources automation for household deduplication. Raw custom
-automations retain their existing behavior. Notification windows pending at
-shutdown are not durable. Details: [daily workflows](docs/daily-workflows.md).
+- Add native reload/removal tests for coordinator timers, listeners and HTTP
+  sessions. HA 2026.2.3 already shuts the coordinators down through its entry
+  lifecycle; no redundant shutdown call was added.
 
-## 0.7.0 — unreleased
+## [0.8.0b1](https://github.com/Sr-0w/ha-bpost/releases/tag/v0.8.0b1) — 2026-10-06
 
-- Added public parcel tracking by barcode and delivery postal code, without an
-  account. Add one entry per parcel through the integration setup menu.
-- Manual entries support names, direction, retention, calendars, pickup locations,
-  eight parcel triggers and the existing card/notification blueprint.
-- Public transport sends no account credentials/cookies, bounds response sizes,
-  refuses redirects and respects rate limits. Inputs are redacted in diagnostics.
-- Outages preserve configured parcels. Tests cover options, duplicates, account
-  coexistence, real HA process restart and isolated entry deletion.
-- Verified with an owned parcel through the real public API and HA config flow,
-  including reload and deletion. Live account/token tests still pass.
+First 0.8 beta, incorporating the development milestones since 0.2.0.
+Requires **Home Assistant 2026.2.3+**.
 
-Manual entries do not provide Mail Ahead or courier GPS/stops. Adding a parcel
-already discovered by an account creates a separate source. Existing accounts
-keep their configuration; setup now starts with an account/public-tracking menu.
+### Added
 
-## 0.6.0 — unreleased
+- Public parcel tracking by barcode/postal code, bulk imports of up to 20 parcels,
+  groups and admin actions for adding/removing manual entries.
+- Cross-source duplicate filtering, a Today dashboard view, visual card editor,
+  sorting and discreet mode.
+- Grouped parcel alerts, configurable material ETA thresholds, private daily
+  summaries, pickup reminders and Companion app blueprints in four languages.
+- Delivery calendars, parcel/letter device triggers, incoming/outgoing counters,
+  canonical statuses and configurable inactive-parcel retention.
+- Mail Ahead capability/count sensors and opt-in native letter images.
+- Optional courier tracking with expiring positions, remaining stops and ETA,
+  separate from pickup locations.
+- Readable tracking health, rate-limit handling and adaptive polling.
 
-- Renewable account sessions; passwords are consumed at login and removed from
-  legacy entries. Refresh failures request reauthentication; outages retain data.
-- Stable parcel statuses, incoming/outgoing counters, account-scoped identities,
-  adaptive polling and configurable retention of inactive parcel entities.
-- Separate courier and pickup trackers, expiring live observations, delivery
-  calendars, nine native device triggers and persisted announcement baselines.
-- Mail Ahead capability/count sensors, letter announcements and optional scans
-  through Home Assistant's image proxy. Scans are disabled by default.
-- Visual card editor, account/direction filters, sorting and discreet mode.
-- FR/NL/EN/DE Companion notification blueprints with account filters and optional
-  quiet hours. Install and configure these separately; quiet-hour events are skipped.
-- Correct HACS release-asset selection and ZIP layout, reproducible builds and
-  archive-based HA installation/migration tests before upload.
+### Changed
 
-### Migration from 0.2.0
+- Persist rotating session tokens instead of account passwords. Legacy accounts
+  migrate while preserving entity identities and options, then require one sign-in.
+- Correct HACS release selection and ZIP layout; bundle the client in a reproducible
+  archive and test installation/migration before uploading it.
+- Raise the HA minimum after confirming that 2025.1 cannot register the new
+  response-capable admin actions.
 
-Restart after upgrading. Existing accounts require one sign-in through Home
-Assistant's reauthentication prompt. Migration removes the stored password while
-preserving account/entity IDs, names and options. Back up before upgrading; a
-rollback requires restoring both the previous integration and its matching backup.
+### Upgrade notes
 
-For manual installation, extract the new ZIP **into**
-`config/custom_components/my_bpost/`; its root now contains `manifest.json`.
+- Use the release's `bpost.zip`, extracted into `config/custom_components/my_bpost/`.
+- Update existing parcel blueprint copies and reload automations for grouped alerts.
+  Raw custom automations retain their prior event behavior.
+- See [notification limits](docs/daily-workflows.md#grouped-parcel-alerts) and
+  [migration instructions](docs/installation.md#upgrading).
 
-### Validation limits
-
-Account login, token rotation, parcel setup and reload have been checked against
-the live API. The test account has no eligible courier round or populated Mail
-Ahead inbox; live courier payloads and real envelope downloads remain unverified.
-Those paths have synthetic API and Home Assistant runtime coverage. No test sends
-a real mobile notification. This version has not been published.
+Development versions 0.3–0.7 were not published separately; their changes are
+included in 0.8.0b1. For older published versions, see
+[GitHub releases](https://github.com/Sr-0w/ha-bpost/releases).
