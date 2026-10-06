@@ -1,0 +1,200 @@
+blueprint:
+  name: My bpost · Parcel delivery notifications
+  description: Grouped Companion app notifications with cross-source deduplication. Requires My bpost 0.8.0b1+. Existing inbox imports are silent. Repeated updates
+    replace the notification for the same parcel or letter. No scans or signed image links are attached.
+  domain: automation
+  homeassistant:
+    min_version: 2026.2.3
+  input:
+    account_device:
+      name: My bpost account or manual parcel
+      description: Choose the account device, or a manual parcel device in 0.7.0+. Requires My bpost 0.8.0b1 or newer.
+      selector:
+        device:
+          filter:
+          - integration: my_bpost
+    all_sources:
+      name: Notify for all accounts and manual parcels
+      description: Uses one deduplicated stream. Enable in one automation to follow all sources.
+      default: false
+      selector:
+        boolean: {}
+    notify_device:
+      name: Phone or tablet
+      description: A device registered with the Home Assistant Companion app.
+      selector:
+        device:
+          filter:
+          - integration: mobile_app
+    language:
+      name: Notification language
+      default: fr
+      selector:
+        select:
+          options:
+          - value: fr
+            label: Français
+          - value: en
+            label: English
+          - value: nl
+            label: Nederlands
+          - value: de
+            label: Deutsch
+    quiet_enabled:
+      name: Enable quiet hours
+      description: Notifications during this period are skipped, not delayed. Uses the Home Assistant time zone.
+        Equal start/end times disable the quiet period.
+      default: false
+      selector:
+        boolean: {}
+    quiet_start:
+      name: Quiet hours start
+      default: '22:00:00'
+      selector:
+        time: {}
+    quiet_end:
+      name: Quiet hours end
+      default: 07:00:00
+      selector:
+        time: {}
+    dashboard_path:
+      name: Dashboard to open
+      description: Home Assistant path opened when tapping the notification, for example /lovelace/deliveries.
+      default: /lovelace
+      selector:
+        text: {}
+    events:
+      name: Notify for
+      default:
+      - my_bpost_out_for_delivery
+      - my_bpost_at_pickup_point
+      - my_bpost_delivered
+      - my_bpost_problem
+      selector:
+        select:
+          multiple: true
+          options:
+          - value: my_bpost_new_package
+            label: New parcel
+          - value: my_bpost_out_for_delivery
+            label: Out for delivery
+          - value: my_bpost_at_pickup_point
+            label: Ready to collect
+          - value: my_bpost_delivered
+            label: Delivered
+          - value: my_bpost_problem
+            label: Delivery problem
+          - value: my_bpost_returned
+            label: Returned to sender
+          - value: my_bpost_eta_changed
+            label: Estimated delivery window changed
+    direction:
+      name: Parcel direction
+      default: all
+      selector:
+        select:
+          options:
+          - value: all
+            label: All parcels
+          - value: incoming
+            label: Incoming
+          - value: outgoing
+            label: Outgoing
+    include_details:
+      name: Include tracking number and changed estimate
+      description: Off by default to keep personal details off the phone lock screen. Sender names and addresses
+        are never included.
+      default: false
+      selector:
+        boolean: {}
+mode: queued
+max: 20
+max_exceeded: warning
+variables:
+  all_sources: !input 'all_sources'
+  selected_events: !input 'events'
+  account_device: !input 'account_device'
+  language: !input 'language'
+  quiet_enabled: !input 'quiet_enabled'
+  quiet_start: !input 'quiet_start'
+  quiet_end: !input 'quiet_end'
+  direction: !input 'direction'
+  include_details: !input 'include_details'
+  texts:
+    fr:
+      my_bpost_new_package: Un nouveau colis est annoncé.
+      my_bpost_out_for_delivery: Un colis est en cours de livraison.
+      my_bpost_at_pickup_point: Un colis est disponible au retrait.
+      my_bpost_delivered: Un colis a été livré.
+      my_bpost_problem: Un problème de livraison a été signalé.
+      my_bpost_returned: Un colis a été retourné à l’expéditeur.
+      my_bpost_eta_changed: Le créneau de livraison estimé a changé.
+    en:
+      my_bpost_new_package: A new parcel was announced.
+      my_bpost_out_for_delivery: A parcel is out for delivery.
+      my_bpost_at_pickup_point: A parcel is ready to collect.
+      my_bpost_delivered: A parcel was delivered.
+      my_bpost_problem: A delivery problem was reported.
+      my_bpost_returned: A parcel was returned to its sender.
+      my_bpost_eta_changed: The estimated delivery window changed.
+    nl:
+      my_bpost_new_package: Een nieuw pakket is aangekondigd.
+      my_bpost_out_for_delivery: Een pakket is onderweg voor levering.
+      my_bpost_at_pickup_point: Een pakket ligt klaar om af te halen.
+      my_bpost_delivered: Een pakket is geleverd.
+      my_bpost_problem: Er is een leveringsprobleem gemeld.
+      my_bpost_returned: Een pakket is teruggestuurd naar de afzender.
+      my_bpost_eta_changed: Het verwachte levertijdvak is gewijzigd.
+    de:
+      my_bpost_new_package: Ein neues Paket wurde angekündigt.
+      my_bpost_out_for_delivery: Ein Paket ist in Zustellung.
+      my_bpost_at_pickup_point: Ein Paket liegt zur Abholung bereit.
+      my_bpost_delivered: Ein Paket wurde zugestellt.
+      my_bpost_problem: Ein Zustellproblem wurde gemeldet.
+      my_bpost_returned: Ein Paket wurde an den Absender zurückgeschickt.
+      my_bpost_eta_changed: Das voraussichtliche Lieferzeitfenster hat sich geändert.
+triggers:
+- trigger: event
+  event_type: my_bpost_notification
+conditions:
+- condition: template
+  value_template: "{{ trigger.event.data.get('event_type') in selected_events }}"
+- condition: template
+  value_template: |-
+    {{ trigger is defined and trigger.platform == 'event'
+       and (all_sources or trigger.event.data.get('entry_id') in
+       ((device_attr(account_device, 'identifiers') or [])
+        | selectattr(0, 'eq', 'my_bpost') | map(attribute=1) | list)) }}
+- condition: template
+  value_template: |-
+    {% if not quiet_enabled %}
+      {{ true }}
+    {% else %}
+      {% set start = today_at(quiet_start) %}
+      {% set end = today_at(quiet_end) %}
+      {% set current = now() %}
+      {{ start == end or not
+         ((start <= current < end) if start < end else
+          (current >= start or current < end)) }}
+    {% endif %}
+- condition: template
+  value_template: '{{ direction == ''all'' or trigger.event.data.get(''direction'') == direction }}'
+- condition: template
+  value_template: '{{ trigger.event.data.get(''parcel_id'', '''') | length > 0 }}'
+actions:
+- device_id: !input 'notify_device'
+  domain: mobile_app
+  type: notify
+  title: My bpost
+  message: |-
+    {{ texts.get(language, texts['en']).get(trigger.event.data.get('event_type'), 'bpost') }}
+    {% if include_details %}
+      {{ trigger.event.data.get('item_code', '') }}
+      {% if trigger.event.data.get('event_type') == 'my_bpost_eta_changed' %}
+        {{ (trigger.event.data.get('new_eta') or []) | reject('equalto', none) | join(' · ') }}
+      {% endif %}
+    {% endif %}
+  data:
+    tag: my-bpost-{{ trigger.event.data['parcel_id'] }}
+    url: !input 'dashboard_path'
+    clickAction: !input 'dashboard_path'

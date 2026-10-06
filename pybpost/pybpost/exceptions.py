@@ -19,3 +19,11 @@ class BpostMaintenanceError(BpostApiError):
 
 class BpostForceUpdateError(BpostApiError):
     """Backend rejects our app version (APPVERSION_NOT_SUPPORTED)."""
+
+
+class BpostRateLimitError(BpostApiError):
+    """The server requests a pause before another request."""
+
+    def __init__(self, retry_after: float = 300) -> None:
+        super().__init__("My bpost request limit reached.")
+        self.retry_after = retry_after

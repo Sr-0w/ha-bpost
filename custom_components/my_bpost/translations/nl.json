@@ -2,12 +2,11 @@
   "config": {
     "step": {
       "user": {
-        "title": "My bpost-account",
-        "description": "Log in met je My bpost e-mailadres en wachtwoord. Pakjes die aan je account zijn gekoppeld worden automatisch ontdekt.",
-        "data": {
-          "username": "E-mail",
-          "password": "Wachtwoord",
-          "app_lang": "Taal"
+        "title": "Trackingbron kiezen",
+        "menu_options": {
+          "account": "My bpost-account",
+          "tracking": "Een pakket zonder account volgen",
+          "bulk": "Meerdere pakketten toevoegen"
         }
       },
       "reauth_confirm": {
@@ -16,14 +15,190 @@
         "data": {
           "password": "Wachtwoord"
         }
+      },
+      "account": {
+        "title": "My bpost-account",
+        "description": "Log in met je My bpost e-mailadres en wachtwoord. Pakjes die aan je account zijn gekoppeld worden automatisch ontdekt.",
+        "data": {
+          "username": "E-mail",
+          "password": "Wachtwoord",
+          "app_lang": "Taal"
+        }
+      },
+      "tracking": {
+        "title": "Openbare pakkettracking",
+        "description": "Voer de barcode en bezorgpostcode in. Elke invoer volgt één pakket; een My bpost-account is niet nodig.",
+        "data": {
+          "barcode": "Barcode",
+          "postal_code": "Bezorgpostcode",
+          "label": "Optionele naam",
+          "app_lang": "Taal",
+          "group": "Groep",
+          "direction": "Richting"
+        }
+      },
+      "bulk": {
+        "title": "Meerdere pakketten toevoegen",
+        "description": "Plak één barcode per regel (maximaal 20). De postcode en groep gelden voor alle regels. Geldige pakketten worden toegevoegd; duplicaten worden overgeslagen.",
+        "data": {
+          "barcodes": "Barcodes",
+          "postal_code": "Bezorgpostcode",
+          "group": "Groep",
+          "app_lang": "Taal"
+        }
       }
     },
     "error": {
       "invalid_auth": "Ongeldige e-mail of wachtwoord.",
-      "cannot_connect": "My bpost-service niet bereikbaar."
+      "cannot_connect": "My bpost-service niet bereikbaar.",
+      "invalid_tracking": "Voer een geldige barcode en postcode in.",
+      "tracking_not_found": "Geen pakket gevonden. Controleer de barcode en bezorgpostcode; een nieuw label is mogelijk nog niet zichtbaar.",
+      "invalid_bulk": "Voer 1 tot 20 barcodes in.",
+      "rate_limited": "bpost vraagt een pauze. Probeer later opnieuw."
     },
     "abort": {
-      "already_configured": "Dit account is al geconfigureerd."
+      "already_configured": "Dit account of pakket is al ingesteld.",
+      "bulk_complete": "Toegevoegd: {added}. Al ingesteld: {existing}. Mislukte regels: {failed}. Controleer barcode en postcode of probeer later opnieuw."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Volgopties",
+        "description": "Controleert geschikte leveringen maximaal eenmaal per minuut, met maximaal twee verzoeken per account per minuut.",
+        "data": {
+          "enable_live_tracking": "Live volgen van de bezorger inschakelen",
+          "retention_days": "Inactieve pakketten bewaren in dagen (1–365)",
+          "enable_mail": "Mail Ahead inschakelen",
+          "enable_mail_images": "Briefafbeeldingen inschakelen",
+          "group": "Groep",
+          "eta_change_minutes": "Minimale wijziging van het levertijdvak voor melding (minuten)"
+        },
+        "data_description": {
+          "enable_mail_images": "Afbeeldingen worden alleen opgehaald wanneer u ze bekijkt. Enveloppen kunnen namen en adressen bevatten."
+        }
+      },
+      "tracking_options": {
+        "title": "Pakketopties",
+        "description": "Wijzig de bezorgpostcode of naam. Verwijder deze integratie-invoer om het pakket niet meer te volgen.",
+        "data": {
+          "postal_code": "Bezorgpostcode",
+          "label": "Optionele naam",
+          "direction": "Richting",
+          "retention_days": "Inactieve pakketten bewaren (1–365 dagen)",
+          "group": "Groep",
+          "eta_change_minutes": "Minimale wijziging van het levertijdvak voor melding (minuten)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ongeldige e-mail of wachtwoord.",
+      "cannot_connect": "My bpost-service niet bereikbaar.",
+      "invalid_tracking": "Voer een geldige barcode en postcode in.",
+      "tracking_not_found": "Geen pakket gevonden. Controleer de barcode en bezorgpostcode; een nieuw label is mogelijk nog niet zichtbaar.",
+      "rate_limited": "bpost vraagt een pauze. Probeer later opnieuw."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "parcel": {
+        "state": {
+          "unknown": "Onbekend",
+          "registered": "Aangemeld",
+          "in_transit": "Onderweg",
+          "out_for_delivery": "In bezorging",
+          "at_pickup_point": "Klaar om af te halen",
+          "delivered": "Bezorgd",
+          "returning": "Retour onderweg",
+          "returned": "Terug bij afzender",
+          "problem": "Bezorgprobleem"
+        }
+      },
+      "mail_status": {
+        "name": "Mail Ahead-status",
+        "state": {
+          "available": "Beschikbaar",
+          "not_subscribed": "Niet geabonneerd",
+          "not_eligible": "Niet in aanmerking",
+          "unknown": "Onbekend",
+          "disabled": "Uitgeschakeld"
+        }
+      },
+      "mail_count": {
+        "name": "Brieven (30 dagen)"
+      },
+      "health": {
+        "name": "Trackingstatus",
+        "state": {
+          "starting": "Starten",
+          "ok": "Bijgewerkt",
+          "auth_required": "Opnieuw aanmelden",
+          "rate_limited": "API-limiet bereikt",
+          "maintenance": "bpost-onderhoud",
+          "outdated_client": "Update nodig",
+          "not_found": "Pakket niet gevonden",
+          "service_unavailable": "Dienst niet beschikbaar"
+        }
+      }
+    },
+    "calendar": {
+      "deliveries": {
+        "name": "Leveringen"
+      }
+    },
+    "image": {
+      "mail_image": {
+        "name": "Brief · {date}"
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "new_package": "Nieuw pakket",
+      "status_changed": "Pakketstatus gewijzigd",
+      "out_for_delivery": "Pakket onderweg voor levering",
+      "delivered": "Pakket geleverd",
+      "at_pickup_point": "Pakket klaar om af te halen",
+      "returned": "Pakket teruggestuurd naar afzender",
+      "problem": "Leveringsprobleem",
+      "eta_changed": "Verwacht levertijdvak gewijzigd",
+      "letter_announced": "Nieuwe brief aangekondigd"
+    }
+  },
+  "services": {
+    "track_parcels": {
+      "name": "Pakketten volgen",
+      "description": "Voeg maximaal 20 handmatige pakketten toe, met een resultaat per regel.",
+      "fields": {
+        "parcels": {
+          "name": "Pakketten",
+          "description": "Lijst van 1–20 objecten met barcode en postal_code; label, group, direction en app_lang zijn optioneel."
+        }
+      }
+    },
+    "untrack_parcels": {
+      "name": "Pakketten niet meer volgen",
+      "description": "Verwijder alleen de geselecteerde handmatige invoeren.",
+      "fields": {
+        "entry_ids": {
+          "name": "Invoer-ID’s",
+          "description": "IDs van handmatige items uit track_parcels; accounts worden geweigerd."
+        }
+      }
+    },
+    "get_summary": {
+      "name": "Pakketoverzicht",
+      "description": "Tel pakketten zonder duplicaten in de tijdzone van Home Assistant.",
+      "fields": {
+        "entry_id": {
+          "name": "Invoer (optioneel)",
+          "description": "Beperk het overzicht tot één integratie-item."
+        },
+        "group": {
+          "name": "Groep",
+          "description": "Exacte lokale groepsnaam; leeg omvat alle groepen."
+        }
+      }
     }
   }
 }

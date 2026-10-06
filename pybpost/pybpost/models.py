@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import math
 
 
 def _str(value: object) -> str | None:
@@ -130,7 +131,9 @@ class DeliveryPoint:
 
     @property
     def has_coords(self) -> bool:
-        return self.latitude is not None and self.longitude is not None
+        return (self.latitude is not None and self.longitude is not None
+                and math.isfinite(self.latitude) and math.isfinite(self.longitude)
+                and -90 <= self.latitude <= 90 and -180 <= self.longitude <= 180)
 
     @property
     def address(self) -> str | None:
@@ -164,6 +167,7 @@ class ParcelDetail:
     delivered_day: str | None = None
     delivered_time: str | None = None
     raw: dict = field(default_factory=dict)
+    canonical_status: str | None = None
 
     @classmethod
     def from_dict(cls, data: dict) -> "ParcelDetail":
@@ -210,38 +214,59 @@ class LiveRoundStatus:
     last_known_lon: float | None = None
     auto_refresh_s: int = 60
 
+    @property
+    def has_coords(self) -> bool:
+        return (self.last_known_lat is not None and self.last_known_lon is not None
+                and math.isfinite(self.last_known_lat) and math.isfinite(self.last_known_lon)
+                and -90 <= self.last_known_lat <= 90 and -180 <= self.last_known_lon <= 180)
+
     @classmethod
     def from_chunk(cls, payload: dict) -> "LiveRoundStatus | None":
-        data = (payload.get("response") or {}).get("data") or {}
+        response = payload.get("response")
+        if not isinstance(response, dict):
+            return None
+        data = response.get("data")
         if not isinstance(data, dict):
             return None
-        round_info = data.get("itemOnRoundStatus") or {}
-        last = round_info.get("lastKnownLocation") or {}
+        round_info = data.get("itemOnRoundStatus")
+        if not isinstance(round_info, dict) or not round_info:
+            return None
+        last = round_info.get("lastKnownLocation")
+        last = last if isinstance(last, dict) else {}
 
         def _num(value: object) -> float | None:
             try:
-                return float(value) if value is not None else None
-            except (TypeError, ValueError):
+                number = float(value) if value is not None and not isinstance(value, bool) else None
+                return number if number is not None and math.isfinite(number) else None
+            except (TypeError, ValueError, OverflowError):
                 return None
 
         stops = _num(round_info.get("nrOfStopsUntilTarget"))
         try:
             auto_refresh = int(data.get("autoRefreshTimeInSeconds") or 60)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             auto_refresh = 60
-        return cls(
-            stops_until_target=int(stops) if stops is not None else None,
+        result = cls(
+            stops_until_target=int(stops) if stops is not None and stops >= 0 and stops.is_integer() else None,
             progress_until_target=_num(round_info.get("progressUntilTarget")),
-            eta_window=_str(round_info.get("estimatedDeliveryTimeWindow")),
+            eta_window=(round_info["estimatedDeliveryTimeWindow"]
+                        if isinstance(round_info.get("estimatedDeliveryTimeWindow"), str)
+                        and round_info["estimatedDeliveryTimeWindow"] else None),
             last_known_lat=_num(last.get("latitude")),
             last_known_lon=_num(last.get("longitude")),
-            auto_refresh_s=max(auto_refresh, 30),
+            auto_refresh_s=max(auto_refresh, 60),
         )
+        if not result.has_coords:
+            result.last_known_lat = result.last_known_lon = None
+        if all(value is None for value in (result.stops_until_target, result.progress_until_target,
+                                          result.eta_window, result.last_known_lat)):
+            return None
+        return result
 
 
 @dataclass
 class AuthTokens:
-    access_token: str
-    refresh_token: str | None = None
+    access_token: str = field(repr=False)
+    refresh_token: str | None = field(default=None, repr=False)
     expires_in: int | None = None
     token_type: str | None = None

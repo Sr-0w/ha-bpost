@@ -2,7 +2,8 @@
   "name": "My bpost",
   "content_in_root": false,
   "filename": "bpost.zip",
+  "zip_release": true,
   "country": "BE",
-  "homeassistant": "2025.1.0",
+  "homeassistant": "2026.2.3",
   "render_readme": true
 }

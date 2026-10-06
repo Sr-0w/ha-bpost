@@ -5,8 +5,10 @@ from .const import APP_VERSION, BASE_URL
 from .exceptions import (
     BpostApiError,
     BpostAuthError,
+    BpostError,
     BpostForceUpdateError,
     BpostMaintenanceError,
+    BpostRateLimitError,
 )
 from .models import (
     AuthTokens,
@@ -18,6 +20,8 @@ from .models import (
     ParcelSummary,
     Person,
 )
+from .status import ParcelStatus, normalize_status
+from .mail import MailCapability, MailItem, mail_capability
 
 __all__ = [
     "APP_VERSION",
@@ -26,8 +30,10 @@ __all__ = [
     "BpostApiError",
     "BpostAuthError",
     "BpostClient",
+    "BpostError",
     "BpostForceUpdateError",
     "BpostMaintenanceError",
+    "BpostRateLimitError",
     "DeliveryPoint",
     "Eta",
     "LiveRoundStatus",
@@ -35,6 +41,11 @@ __all__ = [
     "ParcelEvent",
     "ParcelSummary",
     "Person",
+    "ParcelStatus",
+    "normalize_status",
+    "MailCapability",
+    "MailItem",
+    "mail_capability",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.8.0b2"

@@ -2,12 +2,11 @@
   "config": {
     "step": {
       "user": {
-        "title": "Compte My bpost",
-        "description": "Connectez-vous avec votre e-mail et mot de passe My bpost. Les colis liés à votre compte sont découverts automatiquement.",
-        "data": {
-          "username": "E-mail",
-          "password": "Mot de passe",
-          "app_lang": "Langue"
+        "title": "Choisir la source du suivi",
+        "menu_options": {
+          "account": "Compte My bpost",
+          "tracking": "Suivre un colis sans compte",
+          "bulk": "Ajouter plusieurs colis"
         }
       },
       "reauth_confirm": {
@@ -16,14 +15,190 @@
         "data": {
           "password": "Mot de passe"
         }
+      },
+      "account": {
+        "title": "Compte My bpost",
+        "description": "Connectez-vous avec votre e-mail et mot de passe My bpost. Les colis liés à votre compte sont découverts automatiquement.",
+        "data": {
+          "username": "E-mail",
+          "password": "Mot de passe",
+          "app_lang": "Langue"
+        }
+      },
+      "tracking": {
+        "title": "Suivi public d’un colis",
+        "description": "Saisis le code-barres et le code postal de livraison. Une entrée suit un colis, sans compte My bpost.",
+        "data": {
+          "barcode": "Code-barres",
+          "postal_code": "Code postal de livraison",
+          "label": "Nom facultatif",
+          "app_lang": "Langue",
+          "group": "Groupe",
+          "direction": "Sens du colis"
+        }
+      },
+      "bulk": {
+        "title": "Ajouter plusieurs colis",
+        "description": "Colle un code-barres par ligne (20 maximum). Le code postal et le groupe s’appliquent à toutes les lignes. Les colis valides seront ajoutés ; les doublons seront ignorés.",
+        "data": {
+          "barcodes": "Codes-barres",
+          "postal_code": "Code postal de livraison",
+          "group": "Groupe",
+          "app_lang": "Langue"
+        }
       }
     },
     "error": {
       "invalid_auth": "E-mail ou mot de passe invalide.",
-      "cannot_connect": "Service My bpost injoignable."
+      "cannot_connect": "Service My bpost injoignable.",
+      "invalid_tracking": "Saisis un code-barres et un code postal valides.",
+      "tracking_not_found": "Aucun colis trouvé. Vérifie le code-barres et le code postal de livraison ; une nouvelle étiquette peut ne pas encore être visible.",
+      "invalid_bulk": "Saisis entre 1 et 20 codes-barres.",
+      "rate_limited": "bpost demande une pause. Réessaie plus tard."
     },
     "abort": {
-      "already_configured": "Ce compte est déjà configuré."
+      "already_configured": "Ce compte ou ce colis est déjà configuré.",
+      "bulk_complete": "Ajoutés : {added}. Déjà configurés : {existing}. Lignes en échec : {failed}. Vérifie leur code-barres et code postal, ou réessaie plus tard."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options de suivi",
+        "description": "Vérifie les livraisons éligibles au maximum une fois par minute, avec une limite de deux requêtes par compte par minute.",
+        "data": {
+          "enable_live_tracking": "Activer le suivi du livreur en direct",
+          "retention_days": "Conservation des colis inactifs en jours (1–365)",
+          "enable_mail": "Activer Mail Ahead",
+          "enable_mail_images": "Activer les images du courrier",
+          "group": "Groupe",
+          "eta_change_minutes": "Variation minimale du créneau à signaler (minutes)"
+        },
+        "data_description": {
+          "enable_mail_images": "Les images sont chargées uniquement à leur consultation. Les enveloppes peuvent contenir des noms et des adresses."
+        }
+      },
+      "tracking_options": {
+        "title": "Options du colis",
+        "description": "Modifie le code postal de livraison ou le nom. Supprime cette entrée d’intégration pour arrêter le suivi du colis.",
+        "data": {
+          "postal_code": "Code postal de livraison",
+          "label": "Nom facultatif",
+          "direction": "Sens du colis",
+          "retention_days": "Conserver les colis inactifs pendant (1–365 jours)",
+          "group": "Groupe",
+          "eta_change_minutes": "Variation minimale du créneau à signaler (minutes)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "E-mail ou mot de passe invalide.",
+      "cannot_connect": "Service My bpost injoignable.",
+      "invalid_tracking": "Saisis un code-barres et un code postal valides.",
+      "tracking_not_found": "Aucun colis trouvé. Vérifie le code-barres et le code postal de livraison ; une nouvelle étiquette peut ne pas encore être visible.",
+      "rate_limited": "bpost demande une pause. Réessaie plus tard."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "parcel": {
+        "state": {
+          "unknown": "Inconnu",
+          "registered": "Annoncé",
+          "in_transit": "En transit",
+          "out_for_delivery": "En livraison",
+          "at_pickup_point": "À retirer",
+          "delivered": "Livré",
+          "returning": "En retour",
+          "returned": "Retourné à l’expéditeur",
+          "problem": "Problème de livraison"
+        }
+      },
+      "mail_status": {
+        "name": "État Mail Ahead",
+        "state": {
+          "available": "Disponible",
+          "not_subscribed": "Non abonné",
+          "not_eligible": "Non éligible",
+          "unknown": "Inconnu",
+          "disabled": "Désactivé"
+        }
+      },
+      "mail_count": {
+        "name": "Courriers (30 jours)"
+      },
+      "health": {
+        "name": "Santé du suivi",
+        "state": {
+          "starting": "Démarrage",
+          "ok": "À jour",
+          "auth_required": "Connexion à renouveler",
+          "rate_limited": "Limite API atteinte",
+          "maintenance": "Maintenance bpost",
+          "outdated_client": "Mise à jour nécessaire",
+          "not_found": "Colis introuvable",
+          "service_unavailable": "Service indisponible"
+        }
+      }
+    },
+    "calendar": {
+      "deliveries": {
+        "name": "Livraisons"
+      }
+    },
+    "image": {
+      "mail_image": {
+        "name": "Courrier · {date}"
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "new_package": "Nouveau colis",
+      "status_changed": "Statut du colis modifié",
+      "out_for_delivery": "Colis en cours de livraison",
+      "delivered": "Colis livré",
+      "at_pickup_point": "Colis disponible au retrait",
+      "returned": "Colis retourné à l’expéditeur",
+      "problem": "Problème de livraison",
+      "eta_changed": "Créneau de livraison estimé modifié",
+      "letter_announced": "Nouveau courrier annoncé"
+    }
+  },
+  "services": {
+    "track_parcels": {
+      "name": "Ajouter des colis",
+      "description": "Ajoute jusqu’à 20 colis manuels et renvoie un résultat par ligne.",
+      "fields": {
+        "parcels": {
+          "name": "Colis",
+          "description": "Liste de 1 à 20 objets avec barcode et postal_code ; label, group, direction et app_lang sont facultatifs."
+        }
+      }
+    },
+    "untrack_parcels": {
+      "name": "Retirer des colis",
+      "description": "Supprime uniquement les entrées manuelles sélectionnées.",
+      "fields": {
+        "entry_ids": {
+          "name": "Identifiants des entrées",
+          "description": "Identifiants des entrées manuelles renvoyés par track_parcels ; les comptes sont refusés."
+        }
+      }
+    },
+    "get_summary": {
+      "name": "Résumé des colis",
+      "description": "Compte les colis sans doublons, selon le fuseau horaire de Home Assistant.",
+      "fields": {
+        "entry_id": {
+          "name": "Entrée (facultatif)",
+          "description": "Limiter le bilan à une entrée de l’intégration."
+        },
+        "group": {
+          "name": "Groupe",
+          "description": "Nom exact du groupe local ; vide pour tous les groupes."
+        }
+      }
     }
   }
 }
