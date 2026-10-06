@@ -1,5 +1,22 @@
 # Distribution validation — 2026-10-06
 
+[Documentation](README.md) · [Development](development.md)
+
+This page preserves dated validation results. Earlier sections below describe
+their own artifact; their publication status and test counts are historical.
+The [b2 release](https://github.com/Sr-0w/ha-bpost/releases/tag/v0.8.0b2) records
+successful GitHub validation, publication, real HACS download/extraction and the
+Mail Ahead regression check using the downloaded ZIP.
+
+## Current limits
+
+- Runtime checks use HA 2026.2.3, the declared minimum; other HA versions have
+  not been exercised in this validation environment.
+- The live account provides neither an eligible courier round nor populated Mail
+  Ahead scans. Those payloads and image hosts still need real-data validation.
+- Notification tests exercise HA's native actions with a local sink. Delivery
+  to a physical phone and an overnight daily schedule have not been observed.
+
 ## Review follow-up: 0.8.0b2
 
 Local validation: **154 passed** (70 client/packaging, 66 HA, 18 frontend).
@@ -189,6 +206,9 @@ The cloud helper uses the configured HTTP proxy and normal TLS verification for
 GitHub metadata. No GitHub or bpost credentials are embedded in these commands.
 
 ## Remaining limits
+
+Historical limits for the 0.6.0 snapshot; see [current limits](#current-limits)
+for the published beta.
 
 - GitHub Actions have not run for these unpushed changes. The existing CI uses
   moving HACS/hassfest action references; local results above identify exact

@@ -30,7 +30,8 @@ consumed by the first login and are not retained for automatic re-login.
 Handle `BpostAuthError` by asking the user to sign in again; handle other
 `BpostError` subclasses as service or protocol failures. Never log tokens.
 
-See the parent README for the `x-api-key` situation and the full report.
+See the [client-key documentation](../docs/development.md#about-the-client-key)
+and [validation report](../docs/distribution-validation.md).
 
 Mail Ahead: inspect `mail_capability(await client.get_mail_summary())` before
 calling `get_letters(from_date, to_date)` with `datetime.date` values (at most
