@@ -1,5 +1,15 @@
 # Release notes
 
+## 0.8.0b2 — beta
+
+- Restore the saved Mail Ahead baseline before the first poll. Letters arriving
+  while HA is stopped now announce once after startup; existing letters remain
+  silent. Mail outages during startup still leave parcel tracking available.
+- Add native reload/removal checks for account and public coordinators: timers
+  and listeners stop, stale refreshes do not poll, public HTTP sessions close,
+  and the shared HA session stays open. HA 2026.2.3 already invokes the registered
+  shutdown callbacks, so no duplicate unload shutdown call is added.
+
 ## 0.8.0b1 — beta
 
 Minimum Home Assistant: **2026.2.3**. HA 2025.1 fails to register admin services

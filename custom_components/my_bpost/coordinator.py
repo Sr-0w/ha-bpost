@@ -133,6 +133,9 @@ class BpostDataUpdateCoordinator(DataUpdateCoordinator[BpostData]):
         self._unsub_targets = self.async_add_listener(refresh_targets)
 
     async def async_start_mail(self) -> None:
+        # async_refresh does not invoke _async_setup. Restore the baseline first,
+        # while keeping optional mail failures isolated from parcel setup.
+        await self.mail._async_setup()
         self._unsub_mail = self.mail.async_add_listener(lambda: None)
         # Optional mail failures must not prevent the parcel platforms loading.
         await self.mail.async_refresh()

@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 from homeassistant.bootstrap import async_setup_hass
-from runtime_support import isolated_runtime, install_release
+from runtime_support import isolated_runtime, install_release, assert_coordinators_stopped
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.runner import RuntimeConfig
 from homeassistant.util import dt as dt_util
@@ -104,8 +104,12 @@ class RuntimeTest(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(hass.states.get(parcel.entity_id).state, 'delivered')
                     self.assertEqual(len(delivered), 1)
                     self.assertNotIn('start_time', hass.states.get(calendar.entity_id).attributes)
+                    previous = entry.runtime_data
                     self.assertTrue(await hass.config_entries.async_reload(entry.entry_id))
                     await hass.async_block_till_done()
+                    await assert_coordinators_stopped(self, previous)
+                    self.assertIsNot(previous, entry.runtime_data)
+                    self.assertFalse(previous.client._session.closed)  # Shared HA session.
                     self.assertEqual(entry.state, ConfigEntryState.LOADED)
                     self.assertEqual(hass.states.get(parcel.entity_id).state, 'delivered')
                     self.assertEqual(len(delivered), 1)

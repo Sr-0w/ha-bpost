@@ -1,5 +1,26 @@
 # Distribution validation — 2026-10-06
 
+## Review follow-up: 0.8.0b2
+
+Local validation: **154 passed** (70 client/packaging, 66 HA, 18 frontend).
+ZIP SHA-256: `34f0452d1bc3f22c8e25baa4ad4184652a9c9df716a3c8d74c55591bf4badb0c`. Publication/CI results are recorded in PR #1 and the release.
+
+The Mail Ahead finding was reproduced through native HA unload/setup: a second
+letter appeared while the entry was unloaded and produced zero announcements.
+Loading the persisted mail baseline before the first refresh fixes this: the new
+letter announces once, existing letters and subsequent reloads stay silent.
+A startup mail outage also preserves the baseline, leaves parcels available,
+and announces only the new letter on recovery. Payloads are synthetic.
+
+The reported unload leak is **not reproduced on the minimum HA 2026.2.3**.
+`DataUpdateCoordinator.__init__` registers `self.async_shutdown` via
+`config_entry.async_on_unload`; HA awaits these callbacks after successful unload.
+Native account/public reload and removal tests pass on the original code: all
+three coordinator timers/listeners are stopped, stale refreshes make no calls,
+a real owned aiohttp session is closed, and HA's shared session remains open.
+The implementation documents that existing lifecycle rather than invoking a
+second shutdown explicitly.
+
 ## Beta artifact: 0.8.0b1
 
 Prepared 2026-10-06, with a separate beta version and matching client/tag. The

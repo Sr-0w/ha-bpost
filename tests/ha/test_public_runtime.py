@@ -12,12 +12,14 @@ import tempfile
 import unittest
 from unittest.mock import AsyncMock, patch
 
+import aiohttp
+
 from homeassistant.bootstrap import async_setup_hass
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers import entity_registry as er
 from homeassistant.runner import RuntimeConfig
 
-from runtime_support import isolated_runtime, install_release
+from runtime_support import isolated_runtime, install_release, assert_coordinators_stopped
 
 
 class PublicRuntimeTest(unittest.IsolatedAsyncioTestCase):
@@ -64,8 +66,12 @@ class PublicRuntimeTest(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(sensor,json.loads((root/"expected.json").read_text())["entity_id"])
                         self.assertEqual(hass.states.get(sensor).state,"delivered")
                         fire.assert_not_called();login.assert_not_awaited()
+                        previous = entry.runtime_data
+                        previous.client._session = owned_session = aiohttp.ClientSession(cookie_jar=aiohttp.DummyCookieJar())
                         await hass.config_entries.async_remove(entry.entry_id)
                         await hass.async_block_till_done()
+                        await assert_coordinators_stopped(self, previous)
+                        self.assertTrue(owned_session.closed)
                         self.assertIsNone(registry.async_get(sensor))
                         self.assertEqual(er.async_entries_for_config_entry(registry,entry.entry_id),[])
                         self.assertFalse((root/f".storage/my_bpost.{entry.entry_id}.parcels").exists())
@@ -134,10 +140,14 @@ class PublicRuntimeTest(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(result["errors"]["base"],"tracking_not_found")
                     self.assertNotIn("postal_code",entry.options)
                     lookup.side_effect=None
+                    previous = entry.runtime_data
+                    previous.client._session = owned_session = aiohttp.ClientSession(cookie_jar=aiohttp.DummyCookieJar())
                     result=await hass.config_entries.options.async_configure(result["flow_id"],{
                         "postal_code":"2000","label":"Renamed parcel","direction":"incoming","retention_days":21})
                     self.assertEqual(result["type"],"create_entry")
                     await hass.async_block_till_done()
+                    await assert_coordinators_stopped(self, previous)
+                    self.assertTrue(owned_session.closed)
                     self.assertEqual(entry.state,ConfigEntryState.LOADED)
                     self.assertEqual(lookup.call_args.args,(code,"2000"))
                     self.assertEqual(hass.states.get(sensor).attributes["friendly_name"],"Renamed parcel")

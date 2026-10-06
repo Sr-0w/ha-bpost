@@ -8,6 +8,18 @@ import sys
 import subprocess
 import tempfile
 from zipfile import ZipFile
+from unittest.mock import AsyncMock, patch
+
+
+async def assert_coordinators_stopped(test, parent):
+    """Native entry unload must stop even the permanently subscribed pollers."""
+    for coordinator in (parent, parent.live, parent.mail):
+        test.assertTrue(coordinator._shutdown_requested)
+        test.assertIsNone(coordinator._unsub_refresh)
+        test.assertFalse(coordinator._listeners)
+        with patch.object(coordinator, '_async_update_data', new=AsyncMock()) as fetch:
+            await coordinator.async_refresh()
+            fetch.assert_not_awaited()
 
 
 def install_release(config_dir: Path) -> None:

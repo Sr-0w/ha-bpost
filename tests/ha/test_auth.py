@@ -701,6 +701,7 @@ class AuthTest(unittest.IsolatedAsyncioTestCase):
             restarted = module.BpostMailCoordinator(parent)
             self.addAsyncCleanup(restarted.async_shutdown)
             letters.return_value = [first,second]
+            await restarted._async_setup()
             await restarted.async_refresh()
             await self.hass.async_block_till_done()
             self.assertEqual(len(announced),1)
@@ -711,6 +712,29 @@ class AuthTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(restarted.data.letters),2)
             await self.integration.async_remove_entry(self.hass,entry)
             self.assertIsNone(await restarted._store.async_load())
+
+    async def test_mail_startup_outage_keeps_saved_baseline_until_recovery(self):
+        from homeassistant.util import dt as dt_util
+        entry = await self.entry()
+        first, second = self.mail_item(), self.mail_item('offline-letter')
+        from homeassistant.helpers.storage import Store
+        await Store(self.hass,1,f'my_bpost.{entry.entry_id}.mail').async_save({
+            'seen':{first.key:dt_util.utcnow().timestamp()}})
+        announced=[]
+        self.hass.bus.async_listen('my_bpost_letter_announced',announced.append)
+        with patch.object(self.client_module.BpostClient,'get_mail_summary',new=AsyncMock(side_effect=self.client_module.BpostApiError())):
+            parent=await self.setup_entry(entry)
+        self.assertTrue(parent.last_update_success)
+        self.assertFalse(parent.mail.last_update_success)
+        self.assertEqual(parent.mail._seen.keys(),{first.key})
+        with patch.object(parent.client,'get_mail_summary',new=AsyncMock(return_value={'isMMTSubscribed':True})), patch.object(
+                parent.client,'get_letters',new=AsyncMock(return_value=[first,second])):
+            await parent.mail.async_refresh()
+            await self.hass.async_block_till_done()
+            self.assertEqual([e.data['mail_id'] for e in announced],[second.key])
+            await parent.mail.async_refresh()
+            await self.hass.async_block_till_done()
+            self.assertEqual(len(announced),1)
 
     async def test_mail_failure_is_isolated_and_count_does_not_become_zero(self):
         entry = await self.entry()

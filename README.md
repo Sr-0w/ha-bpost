@@ -8,7 +8,7 @@ Unofficial Home Assistant integration for **My bpost** (Belgium). It logs in
 with your My bpost account and exposes your parcels as entities. You can also
 track a parcel without an account using its barcode and delivery postal code.
 
-Requires **Home Assistant 2026.2.3 or newer**. Version **0.8.0b1** is a beta:
+Requires **Home Assistant 2026.2.3 or newer**. Version **0.8.0b2** is a beta:
 in HACS, enable beta versions for this repository before selecting it. The minimum
 was raised after a runtime test found that HA 2025.1 cannot register the new
 admin actions with response data.
@@ -447,7 +447,7 @@ Live account validation is a separate check.
 ### Release archive and distribution checks
 
 ```sh
-python3 scripts/build_release.py --tag v0.8.0b1 --output bpost.zip
+python3 scripts/build_release.py --tag v0.8.0b2 --output bpost.zip
 BPOST_RELEASE_ZIP="$PWD/bpost.zip" .venv/bin/python -m unittest discover -s tests/ha -v
 ```
 

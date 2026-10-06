@@ -123,6 +123,9 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+    # DataUpdateCoordinator registers async_shutdown with entry.async_on_unload.
+    # HA awaits those callbacks after successful platform unload, including our
+    # parent override which removes polling listeners and closes owned sessions.
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 

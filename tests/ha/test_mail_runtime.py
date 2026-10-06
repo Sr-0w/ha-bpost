@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock, patch
 
 import aiohttp
 from homeassistant.bootstrap import async_setup_hass
-from runtime_support import isolated_runtime, install_release
+from runtime_support import isolated_runtime, install_release, assert_coordinators_stopped
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.runner import RuntimeConfig
 from homeassistant.helpers import entity_registry as er
@@ -72,8 +72,10 @@ class MailRuntimeTest(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(hass.states.get(status_id).state,'available')
 
                     # Enabling images reloads the entry but does not download scans.
+                    previous = entry.runtime_data
                     hass.config_entries.async_update_entry(entry,options={'enable_mail_images':True})
                     await hass.async_block_till_done()
+                    await assert_coordinators_stopped(self, previous)
                     self.assertEqual(entry.state,ConfigEntryState.LOADED)
                     image_state = hass.states.async_all('image')[0]
                     scan.assert_not_awaited()
@@ -96,8 +98,13 @@ class MailRuntimeTest(unittest.IsolatedAsyncioTestCase):
                             self.assertEqual(response.status,200)
                         scan.assert_awaited_once()
 
+                    # A letter arrives while the entry is unloaded. Its saved
+                    # baseline must be loaded before the first new mail poll.
+                    previous = entry.runtime_data
+                    self.assertTrue(await hass.config_entries.async_unload(entry.entry_id))
+                    await assert_coordinators_stopped(self, previous)
                     letters.return_value = [first,second]
-                    await entry.runtime_data.mail.async_refresh()
+                    self.assertTrue(await hass.config_entries.async_setup(entry.entry_id))
                     await hass.async_block_till_done()
                     self.assertEqual(hass.states.get(count_id).state,'2')
                     self.assertEqual(len(announced),1)
