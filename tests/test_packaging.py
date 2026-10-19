@@ -4,6 +4,7 @@ Run:  python3 -m unittest discover -s tests -v
 
 These tests protect the HACS distribution contract:
 - the generic bpost client key ships embedded in source (never a placeholder);
+- the client is committed inside the integration HACS installs;
 - manifest.json / hacs.json keep the metadata HACS and Home Assistant require;
 - shipped JSON files stay valid.
 """
@@ -11,13 +12,10 @@ These tests protect the HACS distribution contract:
 from __future__ import annotations
 
 import json
-import re
-import tempfile
 import unittest
 from pathlib import Path
-from zipfile import ZipFile
 
-from scripts.build_release import build_release
+from scripts.check_release import check_release
 
 ROOT = Path(__file__).resolve().parent.parent
 INTEGRATION = ROOT / "custom_components" / "my_bpost"
@@ -28,16 +26,21 @@ class SourceHygieneTest(unittest.TestCase):
         """The generic x-api-key ships in source; never a placeholder."""
         import re
 
-        const = ROOT / "pybpost" / "pybpost" / "const.py"
+        const = INTEGRATION / "pybpost" / "const.py"
         text = const.read_text(encoding="utf-8")
         self.assertNotIn("REPLACE_ME", text)
         match = re.search(r'X_API_KEY = "([^"]+)"', text)
         self.assertIsNotNone(match)
         self.assertEqual(len(match.group(1)), 40)
 
-    def test_no_vendored_copy_in_source(self):
-        """pybpost is vendored at release time, not committed twice."""
-        self.assertFalse((INTEGRATION / "pybpost").exists())
+    def test_client_is_committed_inside_the_integration(self):
+        """HACS installs this directory, so the client cannot live only in a zip."""
+        client = INTEGRATION / "pybpost"
+        self.assertTrue((client / "client.py").is_file())
+        self.assertFalse((client / "client.py").is_symlink())
+        link = ROOT / "pybpost" / "pybpost"
+        self.assertTrue(link.is_symlink())
+        self.assertEqual(link.resolve(), client.resolve())
 
     def test_no_bytecode_committed(self):
         import subprocess
@@ -83,8 +86,8 @@ class HacsTest(unittest.TestCase):
     def test_required_keys(self):
         hacs = json.loads((ROOT / "hacs.json").read_text())
         self.assertFalse(hacs["content_in_root"])
-        self.assertEqual(hacs["filename"], "bpost.zip")
-        self.assertTrue(hacs["zip_release"])
+        self.assertNotIn("filename", hacs)
+        self.assertNotIn("zip_release", hacs)
         # hacs/action rejects HA-manifest keys here (iot_class, domains…).
         self.assertTrue(
             set(hacs).isdisjoint(
@@ -108,36 +111,22 @@ class HacsTest(unittest.TestCase):
         self.assertIn(f"homeassistant=={minimum}", requirements)
 
 
-class ReleaseArchiveTest(unittest.TestCase):
-    def test_self_contained_reproducible_hacs_archive(self):
-        with tempfile.TemporaryDirectory() as temp:
-            first, second = Path(temp) / "first.zip", Path(temp) / "second.zip"
-            build_release(first)
-            build_release(second)
-            self.assertEqual(first.read_bytes(), second.read_bytes())
-            with ZipFile(first) as archive:
-                names = archive.namelist()
-                self.assertEqual(len(names), len(set(names)))
-                for required in ("manifest.json", "config_flow.py", "image.py", "calendar.py",
-                                 "pybpost/client.py", "pybpost/mail.py", "pybpost/status.py",
-                                 "frontend/my-bpost-parcels-card.js", "translations/fr.json", "brand/icon.png", "LICENSE"):
-                    self.assertIn(required, names)
-                for name in names:
-                    self.assertNotIn("..", Path(name).parts)
-                    self.assertFalse(name.startswith(("/", "custom_components/", "tests/", ".")))
-                    self.assertNotIn("__pycache__", name)
-                    self.assertNotIn(Path(name).suffix, (".pyc", ".env"))
-                    if name.endswith(".yaml"):
-                        self.assertEqual(name,"services.yaml")
-                self.assertIsNone(archive.testzip())
-            self.assertFalse((INTEGRATION / "pybpost").exists())
+class ReleaseSourceTest(unittest.TestCase):
+    def test_tagged_integration_is_self_contained(self):
+        version = check_release()
+        manifest = json.loads((INTEGRATION / "manifest.json").read_text())
+        self.assertEqual(version, manifest["version"])
+        for required in ("manifest.json", "config_flow.py", "image.py", "calendar.py",
+                         "pybpost/client.py", "pybpost/mail.py", "pybpost/status.py",
+                         "frontend/my-bpost-parcels-card.js", "translations/fr.json",
+                         "brand/icon.png", "services.yaml"):
+            path = INTEGRATION / required
+            self.assertTrue(path.is_file(), required)
+            self.assertFalse(path.is_symlink(), required)
 
-    def test_tag_mismatch_refuses_to_write(self):
-        with tempfile.TemporaryDirectory() as temp:
-            output = Path(temp) / "bpost.zip"
-            with self.assertRaises(ValueError):
-                build_release(output, tag="v999.0.0")
-            self.assertFalse(output.exists())
+    def test_tag_mismatch_is_rejected(self):
+        with self.assertRaises(ValueError):
+            check_release(tag="v999.0.0")
 
 
 class CardTest(unittest.TestCase):

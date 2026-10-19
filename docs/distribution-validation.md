@@ -2,6 +2,10 @@
 
 [Documentation](README.md) · [Development](development.md)
 
+Version 0.8.1 stops publishing `bpost.zip`. HACS installs
+`custom_components/my_bpost` from the tag, and that directory contains the
+client. The sections below are the historical record of the zip-based betas.
+
 This page preserves dated validation results. Earlier sections below describe
 their own artifact; their publication status and test counts are historical.
 The [b2 release](https://github.com/Sr-0w/ha-bpost/releases/tag/v0.8.0b2) records

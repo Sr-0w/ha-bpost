@@ -8,6 +8,8 @@ import logging
 from hashlib import sha256
 from typing import Any
 
+import aiohttp
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
@@ -155,7 +157,7 @@ class BpostDataUpdateCoordinator(DataUpdateCoordinator[BpostData]):
             self.retry_at = dt_util.utcnow()+timedelta(seconds=err.retry_after)
             self.update_interval = timedelta(seconds=err.retry_after)
             raise UpdateFailed("My bpost requested a polling pause.") from err
-        except BpostError as err:
+        except (BpostError, aiohttp.ClientError, TimeoutError) as err:
             self.health = ("maintenance" if isinstance(err,BpostMaintenanceError) else
                            "outdated_client" if isinstance(err,BpostForceUpdateError) else
                            "not_found" if isinstance(err,BpostTrackingNotFound) else "service_unavailable")

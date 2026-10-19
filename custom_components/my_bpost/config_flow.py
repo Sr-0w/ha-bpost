@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import aiohttp
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
@@ -113,7 +114,7 @@ class BpostConfigFlow(ConfigFlow, domain=DOMAIN):
                 tokens = await client.login(email, user_input[CONF_PASSWORD])
             except BpostAuthError:
                 errors["base"] = "invalid_auth"
-            except BpostError:
+            except (BpostError, aiohttp.ClientError, TimeoutError):
                 errors["base"] = "cannot_connect"
             else:
                 return self.async_create_entry(
@@ -156,7 +157,7 @@ class BpostConfigFlow(ConfigFlow, domain=DOMAIN):
                     entry.data[CONF_USERNAME], user_input[CONF_PASSWORD])
             except BpostAuthError:
                 errors["base"] = "invalid_auth"
-            except BpostError:
+            except (BpostError, aiohttp.ClientError, TimeoutError):
                 errors["base"] = "cannot_connect"
             else:
                 return self.async_update_reload_and_abort(
@@ -217,7 +218,7 @@ async def _validate_tracking(hass, barcode, postcode, lang):
         return {"base": "tracking_not_found"}
     except BpostRateLimitError:
         return {"base": "rate_limited"}
-    except BpostError:
+    except (BpostError, aiohttp.ClientError, TimeoutError):
         return {"base": "cannot_connect"}
     finally:
         await client.close()

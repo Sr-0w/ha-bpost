@@ -31,7 +31,6 @@ class AuthTest(unittest.IsolatedAsyncioTestCase):
         package.mkdir()
         (package / '__init__.py').write_text('')
         shutil.copytree(root / 'custom_components/my_bpost', package / 'my_bpost')
-        shutil.copytree(root / 'pybpost/pybpost', package / 'my_bpost/pybpost')
         sys.path.insert(0, cls.stage.name)
         cls.addClassCleanup(sys.path.remove, cls.stage.name)
         cls.integration = importlib.import_module('custom_components.my_bpost')
@@ -102,8 +101,11 @@ class AuthTest(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('password', result['data'])
 
     async def test_flow_distinguishes_auth_and_outage(self):
+        import aiohttp
         for error, expected in ((self.client_module.BpostAuthError, 'invalid_auth'),
-                                (self.client_module.BpostApiError, 'cannot_connect')):
+                                (self.client_module.BpostApiError, 'cannot_connect'),
+                                (aiohttp.ClientError, 'cannot_connect'),
+                                (TimeoutError, 'cannot_connect')):
             with self.subTest(error=error.__name__):
                 with patch.object(self.client_module.BpostClient, 'login', new=AsyncMock(side_effect=error)):
                     result = await self.flow().async_step_user({
@@ -123,13 +125,15 @@ class AuthTest(unittest.IsolatedAsyncioTestCase):
         reload.assert_called_once_with(entry.entry_id)
 
     async def test_reauth_outage_preserves_previous_tokens(self):
+        import aiohttp
         entry = await self.entry()
         before = dict(entry.data)
-        with patch.object(self.client_module.BpostClient, 'login', new=AsyncMock(
-            side_effect=self.client_module.BpostApiError)):
-            result = await self.flow(entry=entry).async_step_reauth_confirm({'password': 'synthetic-password'})
-        self.assertEqual(result['errors']['base'], 'cannot_connect')
-        self.assertEqual(dict(entry.data), before)
+        for error in (self.client_module.BpostApiError, aiohttp.ClientError, TimeoutError):
+            with self.subTest(error=error.__name__):
+                with patch.object(self.client_module.BpostClient, 'login', new=AsyncMock(side_effect=error)):
+                    result = await self.flow(entry=entry).async_step_reauth_confirm({'password': 'synthetic-password'})
+                self.assertEqual(result['errors']['base'], 'cannot_connect')
+                self.assertEqual(dict(entry.data), before)
 
     async def test_migration_is_local_preserves_entry_and_options(self):
         entry = await self.entry(version=1, data={
@@ -184,8 +188,11 @@ class AuthTest(unittest.IsolatedAsyncioTestCase):
     async def test_coordinator_maps_errors_after_setup(self):
         entry = await self.entry()
         coordinator = await self.setup_entry(entry)
+        import aiohttp
         for error, expected in ((self.client_module.BpostAuthError, ConfigEntryAuthFailed),
-                                (self.client_module.BpostApiError, UpdateFailed)):
+                                (self.client_module.BpostApiError, UpdateFailed),
+                                (aiohttp.ClientError, UpdateFailed),
+                                (TimeoutError, UpdateFailed)):
             with self.subTest(error=error.__name__):
                 with patch.object(coordinator.client, 'get_parcels_list', new=AsyncMock(side_effect=error)):
                     with self.assertRaises(expected):

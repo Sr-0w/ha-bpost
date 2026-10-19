@@ -6,6 +6,8 @@ import logging
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
+import aiohttp
+
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.storage import Store
@@ -74,7 +76,7 @@ class BpostMailCoordinator(DataUpdateCoordinator[MailData]):
         except BpostRateLimitError as err:
             self.update_interval = timedelta(seconds=max(1800, err.retry_after))
             raise UpdateFailed("My bpost requested a Mail Ahead polling pause.") from err
-        except BpostError as err:
+        except (BpostError, aiohttp.ClientError, TimeoutError) as err:
             raise UpdateFailed("Unable to update My bpost Mail Ahead.") from err
 
         previous = self._seen

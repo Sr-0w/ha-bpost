@@ -4,6 +4,24 @@ Published changes, newest first. Installation and migration steps live in the
 [upgrade guide](docs/installation.md#upgrading); detailed behavior is in the
 [documentation](docs/README.md).
 
+## 0.8.1 — 2026-10-19
+
+### Fixed
+
+- Commit the bpost client inside `custom_components/my_bpost/pybpost` so HACS
+  installs the same files as the tagged source. `hacs.json` no longer selects
+  a separate `bpost.zip`.
+- Map authentication failures in the parcel, live and Mail Ahead coordinators to
+  `ConfigEntryAuthFailed`, and map other bpost errors plus network timeouts to
+  `UpdateFailed`. Config-flow network failures show **cannot connect**.
+- Redact the config-entry id, entity ids and names, device names and tracking
+  numbers in diagnostics.
+
+### Changed
+
+- A published GitHub release runs the tests against the tag and uploads the
+  notification blueprints. The tag's integration directory is what HACS installs.
+
 ## [0.8.0b2](https://github.com/Sr-0w/ha-bpost/releases/tag/v0.8.0b2) — 2026-10-06
 
 ### Fixed

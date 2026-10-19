@@ -7,6 +7,8 @@ import logging
 from time import monotonic
 from typing import TYPE_CHECKING
 
+import aiohttp
+
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
@@ -74,7 +76,7 @@ class BpostLiveCoordinator(DataUpdateCoordinator[dict[str, LiveObservation]]):
             except BpostRateLimitError as err:
                 self._account_retry_at = now + err.retry_after
                 return {}  # No courier location is presented as current during backoff.
-            except BpostError:
+            except (BpostError, aiohttp.ClientError, TimeoutError):
                 status = None
             if status is None:
                 result.pop(code, None)

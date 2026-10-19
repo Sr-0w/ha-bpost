@@ -15,13 +15,7 @@ jobs:
       - name: Install client
         run: python3 -m pip install -e ./pybpost --config-settings editable_mode=compat
       - name: Client and packaging tests
-        run: python3 -m unittest discover -s tests -v
-      - name: Build HACS archive
-        run: python3 scripts/build_release.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: bpost-release
-          path: bpost.zip
+        run: python3 -m unittest $(find tests -maxdepth 1 -name 'test_*.py' | sort) -v
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -29,7 +23,6 @@ jobs:
         run: node --test tests/frontend/*.test.cjs
 
   integration:
-    needs: packaging
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,13 +31,8 @@ jobs:
           python-version: "3.13"
       - name: Install Home Assistant test dependencies
         run: python3 -m pip install -r requirements-dev.txt
-      - uses: actions/download-artifact@v4
-        with:
-          name: bpost-release
-      - name: Integration and archive installation tests
+      - name: Integration tests
         run: python3 -m unittest discover -s tests/ha -v
-        env:
-          BPOST_RELEASE_ZIP: ${{ github.workspace }}/bpost.zip
 
   hacs:
     runs-on: ubuntu-latest

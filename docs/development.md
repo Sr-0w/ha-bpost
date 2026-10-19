@@ -22,16 +22,16 @@ Use Python 3.13. From the repository root:
 ```sh
 python3 -m venv .venv
 .venv/bin/python -m pip install -e ./pybpost --config-settings editable_mode=compat
-.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python -m unittest $(find tests -maxdepth 1 -name 'test_*.py' | sort) -v
 .venv/bin/python -m pip install -r requirements-dev.txt
 .venv/bin/python -m unittest discover -s tests/ha -v
 node --test tests/frontend/*.test.cjs
 ```
 
 The client tests run against a local HTTP server with synthetic credentials.
-The full Home Assistant runtime tests build and extract the actual release ZIP
-in a temporary configuration directory;
-they do not vendor files into the source checkout or contact bpost. They cover
+The full Home Assistant runtime tests copy `custom_components/my_bpost` into a
+temporary configuration directory, which is the tree HACS installs from a tag.
+They do not contact bpost. They cover
 config flows, migration, token rotation, reauthentication, error handling, and
 diagnostic redaction, status transitions, account-scoped identities, polling limits,
 retention across restart and reactivation, account-filtered device triggers,
@@ -41,18 +41,19 @@ removal and re-creation. The Node tests check card
 rendering and interactions with a minimal DOM harness, not a real browser.
 Live account validation is a separate check.
 
-## Release archive and distribution checks
+## Release checks
 
 ```sh
-python3 scripts/build_release.py --tag v0.8.0b2 --output bpost.zip
-BPOST_RELEASE_ZIP="$PWD/bpost.zip" .venv/bin/python -m unittest discover -s tests/ha -v
+python3 scripts/check_release.py --tag v0.8.1
+.venv/bin/python -m unittest discover -s tests/ha -v
 ```
 
-The builder checks all three version declarations and the release tag, bundles
-the client and existing brand assets, and excludes caches and development files.
-Identical inputs produce identical archives. HACS extracts this ZIP directly into
-the integration directory (`zip_release: true`). CI tests its built artifact, and
-the release workflow repeats the HA tests before uploading it.
+`scripts/check_release.py` checks that the manifest, client package and
+`pyproject.toml` versions match, that the tag matches when one is given, and
+that the client files are real files inside `custom_components/my_bpost/pybpost`.
+HACS installs that directory from the tag. There is no separate integration zip.
+The release workflow repeats the tests on the tagged commit before uploading the
+blueprint YAML files.
 
 [Distribution validation](distribution-validation.md) records the official
 HACS/hassfest versions, results, reproduction commands and remaining limits.
@@ -74,19 +75,24 @@ Set `BPOST_ARTIFACT_DIR` to choose where its demo screenshot is saved. This chec
 does not authenticate or include real parcel data.
 
 ```text
-custom_components/my_bpost/   # integration (config flow, coordinator, platforms)
-pybpost/                   # standalone async client (source of truth)
-scripts/extract_key.py     # re-derive the x-api-key from the official app lib
-tests/                     # packaging and client HTTP tests
-tests/ha/                  # Home Assistant session and migration tests
+custom_components/my_bpost/          # integration HACS installs from a tag
+custom_components/my_bpost/pybpost/  # client source of truth
+pybpost/                             # installable package; pybpost/pybpost links to the client
+scripts/extract_key.py               # re-derive the x-api-key from the official app lib
+tests/                               # packaging and client HTTP tests
+tests/ha/                            # Home Assistant session and migration tests
 ```
 
-`pybpost/` is vendored into the release asset by
-`.github/workflows/release.yml`, which also checks that `manifest.json`
-matches the release tag. To cut a release, update `custom_components/my_bpost/manifest.json`,
-`pybpost/pyproject.toml` and `pybpost/pybpost/__init__.py` to the same version.
-Push and wait for validation, then publish a matching `vX.Y.Z` tag (or `vX.Y.ZbN`
-prerelease). CI retests the ZIP and attaches it with the three blueprint YAML files.
+The client is committed inside the integration so a HACS install matches the
+tag. `pybpost/pybpost` is a symbolic link to that package, which lets
+`pip install -e ./pybpost` import it without putting the integration directory
+on `sys.path` (that would shadow Python's standard-library `calendar` module).
+To cut a release, update `custom_components/my_bpost/manifest.json`,
+`pybpost/pyproject.toml` and `custom_components/my_bpost/pybpost/__init__.py`
+to the same version. Push and wait for validation, then publish a matching
+`vX.Y.Z` tag (or `vX.Y.ZbN` prerelease). The release workflow checks the tag,
+retests that source and uploads the three blueprint YAML files.
+
 If bpost rotated the key, re-extract it first
 with `scripts/extract_key.py` against the current app release.
 

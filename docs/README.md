@@ -9,7 +9,7 @@ Start with installation, then choose the guides relevant to your setup.
 
 | Guide | What it covers |
 | --- | --- |
-| [Installation and upgrades](installation.md) | HACS, the release ZIP, account setup and migrations |
+| [Installation and upgrades](installation.md) | HACS, manual installation, account setup and migrations |
 | [Parcels and tracking](tracking.md) | Manual parcels, entities, statuses, retention, calendars and courier data |
 | [Dashboard card](dashboard.md) | Visual editor, card configuration, sorting and discreet mode |
 | [Notifications and automations](notifications.md) | Companion blueprints, quiet hours and raw device triggers |
