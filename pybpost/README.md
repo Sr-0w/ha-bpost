@@ -3,6 +3,10 @@
 Async Python client for the My bpost account API (unofficial,
 reverse-engineered from the official Android app 3.45.1).
 
+The implementation lives in `custom_components/my_bpost/pybpost` so the Home
+Assistant integration is self-contained. `pybpost/pybpost` links to that package
+for `pip install -e ./pybpost`; it is not a second copy.
+
 ```python
 import asyncio
 from pybpost import BpostClient

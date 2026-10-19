@@ -2,15 +2,14 @@
 
 [Documentation](README.md) · [Project overview](../README.md)
 
-Requires **Home Assistant 2026.2.3+**. These guides describe the 0.8 beta.
+Requires **Home Assistant 2026.2.3+**. These guides describe version 0.8.1.
 An account is optional when tracking a parcel by barcode and postal code.
 
 ## HACS
 
 1. In HACS, open the ⋮ menu → **Custom repositories**, add
    `https://github.com/Sr-0w/ha-bpost` with category **Integration**.
-2. Enable beta versions for this repository, install **v0.8.0b2**, and restart
-   Home Assistant.
+2. Install **My bpost** and restart Home Assistant.
 3. Go to Settings → Devices & Services → Add Integration → **My bpost**,
    choose **My bpost account**, and enter your email + password.
 
@@ -21,15 +20,15 @@ For multiple barcodes, see [bulk import](daily-workflows.md#import-and-manage-ma
 
 ## Manual installation
 
-Download `bpost.zip` from the
-[releases](https://github.com/Sr-0w/ha-bpost/releases). For the 0.8 beta, extract
-its contents **into `config/custom_components/my_bpost/`**, then restart.
-The archive root contains `manifest.json`, `pybpost/` and `frontend/`; do not
-extract it directly into `config/`. Earlier archives included the
-`custom_components/my_bpost/` parent directories.
+Download the source archive for a release from
+[releases](https://github.com/Sr-0w/ha-bpost/releases). Copy
+`custom_components/my_bpost` into `config/custom_components/`, then restart.
+That folder already contains the Python client, the Lovelace card and the
+translations. Releases before 0.8.1 instead published a flat `bpost.zip` that
+was extracted directly into `config/custom_components/my_bpost/`.
 
-Use the release asset for installation: the source checkout alone does not include
-the bundled Python client. [Notification blueprints](notifications.md) are installed separately.
+[Notification blueprints](notifications.md) are separate release assets and are
+installed separately.
 
 ## Upgrading
 

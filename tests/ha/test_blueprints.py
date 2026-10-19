@@ -31,7 +31,6 @@ class BlueprintTest(unittest.IsolatedAsyncioTestCase):
         shutil.copytree(root/'blueprints',Path(self.config.name)/'blueprints')
         package = Path(self.config.name)/'custom_components'
         shutil.copytree(root/'custom_components',package)
-        shutil.copytree(root/'pybpost/pybpost',package/'my_bpost/pybpost')
         (package/'__init__.py').write_text('')
         sys.path.insert(0,self.config.name)
         self.addCleanup(sys.path.remove,self.config.name)

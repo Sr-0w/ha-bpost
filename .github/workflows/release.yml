@@ -5,27 +5,31 @@ on:
     types: [published]
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - name: Build self-contained HACS archive
-        run: python3 scripts/build_release.py --tag "$RELEASE_TAG"
+      - name: Check the tag matches the integration
+        run: python3 scripts/check_release.py --tag "$RELEASE_TAG"
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
+      - name: Install client
+        run: python3 -m pip install -e ./pybpost --config-settings editable_mode=compat
       - name: Install Home Assistant test dependencies
         run: python3 -m pip install -r requirements-dev.txt
-      - name: Test installation and migration from this archive
-        run: python3 -m unittest discover -s tests/ha -v
-        env:
-          BPOST_RELEASE_ZIP: ${{ github.workspace }}/bpost.zip
-      - name: Upload validated asset
+      - name: Test the tagged source
+        run: |
+          python3 -m unittest $(find tests -maxdepth 1 -name 'test_*.py' | sort) -v
+          python3 -m unittest discover -s tests/ha -v
+      - name: Upload blueprint assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$RELEASE_TAG" bpost.zip blueprints/automation/my_bpost/*.yaml --clobber
+        run: gh release upload "$RELEASE_TAG" blueprints/automation/my_bpost/*.yaml --clobber

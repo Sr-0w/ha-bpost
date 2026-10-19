@@ -11,8 +11,7 @@ individual parcels with a barcode and delivery postal code.
 Community project, not affiliated with bpost. Available in English, French, Dutch
 and German.
 
-> **Current version: [0.8.0b2 beta](https://github.com/Sr-0w/ha-bpost/releases/tag/v0.8.0b2).**
-> Requires Home Assistant **2026.2.3+**. Enable beta versions in HACS to install it.
+> **Current version: 0.8.1.** Requires Home Assistant **2026.2.3+**.
 
 ## What you get
 
@@ -32,16 +31,15 @@ See the [documentation](docs/README.md) for availability and limitations.
 
 1. Open **HACS → Custom repositories** and add
    `https://github.com/Sr-0w/ha-bpost` as an **Integration**.
-2. Enable beta versions for this repository, install **v0.8.0b2**, and restart
-   Home Assistant.
+2. Install **My bpost** and restart Home Assistant.
 3. Go to **Settings → Devices & services → Add integration → My bpost**.
 4. Choose your **My bpost account**, **a parcel without an account**, or **bulk import**.
 
 [![Open this repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Sr-0w&repository=ha-bpost&category=integration)
 
 For manual installation or an upgrade from an older version, follow the
-[installation and migration guide](docs/installation.md). Install the release's
-`bpost.zip` asset; GitHub's source ZIP does not include the bundled client.
+[installation and migration guide](docs/installation.md). HACS installs
+`custom_components/my_bpost` from the release tag, which already includes the client.
 
 ## Add your dashboard
 

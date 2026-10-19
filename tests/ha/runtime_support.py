@@ -4,10 +4,8 @@ import asyncio
 from functools import wraps
 import os
 from pathlib import Path
+import shutil
 import sys
-import subprocess
-import tempfile
-from zipfile import ZipFile
 from unittest.mock import AsyncMock, patch
 
 
@@ -23,22 +21,16 @@ async def assert_coordinators_stopped(test, parent):
 
 
 def install_release(config_dir: Path) -> None:
-    """Exercise the release artifact with HACS's integration extraction layout.
+    """Install the integration the way HACS copies a tagged source tree.
 
-    CI passes the very archive it built; local runs use the same build script.
-    No editable client installation or source-copy fallback is used.
+    The client is committed inside the integration, so no release archive is built.
     """
-    source = Path(__file__).resolve().parents[2]
-    with tempfile.TemporaryDirectory() as staging:
-        supplied = os.environ.get("BPOST_RELEASE_ZIP")
-        archive = Path(supplied) if supplied else Path(staging) / "bpost.zip"
-        if not supplied:
-            subprocess.run([sys.executable, str(source / "scripts/build_release.py"),
-                            "--output", str(archive)], check=True, capture_output=True)
-        with ZipFile(archive) as package:
-            assert "manifest.json" in package.namelist()
-            assert "pybpost/client.py" in package.namelist()
-            package.extractall(config_dir / "custom_components/my_bpost")
+    source = Path(__file__).resolve().parents[2] / "custom_components" / "my_bpost"
+    destination = config_dir / "custom_components" / "my_bpost"
+    shutil.copytree(source, destination, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    client = destination / "pybpost" / "client.py"
+    assert (destination / "manifest.json").is_file()
+    assert client.is_file() and not client.is_symlink()
 
 
 def isolated_runtime(test):
