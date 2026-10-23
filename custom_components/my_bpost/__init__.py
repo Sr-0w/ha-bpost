@@ -21,6 +21,7 @@ from .pybpost.client import BpostClient
 from .pybpost.const import X_API_KEY
 from .pybpost.models import AuthTokens
 from .pybpost.tracking import PublicTrackingClient
+from .time_zone import async_get_bpost_time_zone
 from .tracking import PublicTrackingCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,9 +71,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def async_persist_tokens(updated: AuthTokens) -> None:
         hass.config_entries.async_update_entry(entry, data=session_data(entry.data, updated))
 
+    zone = await async_get_bpost_time_zone()
     client = PublicTrackingClient(
         trust_env=async_get_clientsession(hass).trust_env,
         app_lang=entry.data.get(CONF_APP_LANG, "fr"),
+        time_zone=zone,
     ) if public else BpostClient(
         async_get_clientsession(hass),
         app_lang=entry.data.get(CONF_APP_LANG, "fr"),

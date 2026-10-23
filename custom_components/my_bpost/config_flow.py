@@ -18,6 +18,7 @@ from .pybpost.client import BpostClient
 from .pybpost.const import X_API_KEY
 from .pybpost.exceptions import BpostAuthError, BpostError, BpostRateLimitError
 from .pybpost.tracking import PublicTrackingClient, BpostTrackingNotFound, tracking_inputs
+from .time_zone import async_get_bpost_time_zone
 
 _LANGUAGES = ["fr", "nl", "en", "de"]
 
@@ -211,7 +212,9 @@ class BpostOptionsFlow(OptionsFlow):
 
 
 async def _validate_tracking(hass, barcode, postcode, lang):
-    client = PublicTrackingClient(trust_env=async_get_clientsession(hass).trust_env, app_lang=lang)
+    zone = await async_get_bpost_time_zone()
+    client = PublicTrackingClient(
+        trust_env=async_get_clientsession(hass).trust_env, app_lang=lang, time_zone=zone)
     try:
         await client.get_parcel(barcode, postcode)
     except BpostTrackingNotFound:

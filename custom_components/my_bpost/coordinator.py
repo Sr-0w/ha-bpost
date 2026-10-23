@@ -30,12 +30,13 @@ from .const import (
 )
 from .pybpost.client import BpostClient
 from .pybpost.exceptions import BpostAuthError, BpostError, BpostRateLimitError, BpostMaintenanceError, BpostForceUpdateError
-from .pybpost.tracking import BpostTrackingNotFound
+from .pybpost.tracking import BpostTrackingNotFound, PublicTrackingClient
 from .pybpost.models import ParcelDetail, ParcelSummary
 from .pybpost.status import ParcelStatus, normalize_status
 from .live import BpostLiveCoordinator
 from .retention import apply_retention
 from .mail import BpostMailCoordinator
+from .time_zone import async_get_bpost_time_zone
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -100,6 +101,7 @@ class BpostDataUpdateCoordinator(DataUpdateCoordinator[BpostData]):
         self._inactive_since: dict[str, float] = {}
         self.expired_codes: set[str] = set()
         self._store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.parcels")
+        self.time_zone = None
         self.live = BpostLiveCoordinator(self)
         self.mail = BpostMailCoordinator(self)
         self._unsub_mail = None
@@ -107,6 +109,10 @@ class BpostDataUpdateCoordinator(DataUpdateCoordinator[BpostData]):
         self._unsub_targets = None
 
     async def _async_setup(self) -> None:
+        # Before the first poll, including public tracking's timestamp conversion.
+        self.time_zone = await async_get_bpost_time_zone()
+        if isinstance(self.client, PublicTrackingClient):
+            self.client.time_zone = self.time_zone
         stored = await self._store.async_load()
         self._previous = stored.get("parcels") if isinstance(stored, dict) else None
         if not isinstance(self._previous, dict):

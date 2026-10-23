@@ -608,7 +608,8 @@ class AuthTest(unittest.IsolatedAsyncioTestCase):
         data.details['history'].eta = self.models.Eta('2026-10-25', '10:00', '12:00')
         coordinator.data = data
         calendar = module.BpostDeliveryCalendar(coordinator, entry)
-        events = module.delivery_events(data, entry.entry_id)
+        zone = coordinator.time_zone
+        events = module.delivery_events(data, entry.entry_id, zone)
         self.assertEqual(len(events), 3)
         self.assertTrue(events[0].all_day)
         self.assertEqual(events[0].start, date(2026, 10, 24))
@@ -619,18 +620,19 @@ class AuthTest(unittest.IsolatedAsyncioTestCase):
         ranged = await calendar.async_get_events(self.hass, datetime(2026,10,25,9,tzinfo=timezone.utc), datetime(2026,10,25,11,tzinfo=timezone.utc))
         self.assertEqual([e.uid for e in ranged], [f'{entry.entry_id}_timed'])
         self.assertEqual(await calendar.async_get_events(self.hass, datetime(2026,10,25,11,tzinfo=timezone.utc), datetime(2026,10,25,12,tzinfo=timezone.utc)), [])
-        self.assertNotEqual(events[1].uid, module.delivery_events(data, 'other')[1].uid)
+        self.assertNotEqual(events[1].uid, module.delivery_events(data, 'other', zone)[1].uid)
         with patch.object(module.dt_util, 'utcnow', return_value=datetime(2026,10,25,10,tzinfo=timezone.utc)):
             self.assertEqual(calendar.event.uid, ranged[0].uid)
         data.details['timed'].eta.day = '2026-07-25'
-        self.assertEqual(next(e for e in module.delivery_events(data, entry.entry_id) if e.uid.endswith('_timed')).start.utcoffset(), timedelta(hours=2))
+        self.assertEqual(next(e for e in module.delivery_events(data, entry.entry_id, zone) if e.uid.endswith('_timed')).start.utcoffset(), timedelta(hours=2))
 
     async def test_calendar_reversed_window_falls_back_and_options_validate_range(self):
         import voluptuous as vol
         module = importlib.import_module('custom_components.my_bpost.calendar')
         data = self.parcel_data({'parcel': 'IN_TRANSIT'})
         data.details['parcel'].eta = self.models.Eta('2026-10-05', '16:00', '12:00')
-        self.assertTrue(module.delivery_events(data, 'account')[0].all_day)
+        zone = await importlib.import_module('custom_components.my_bpost.time_zone').async_get_bpost_time_zone()
+        self.assertTrue(module.delivery_events(data, 'account', zone)[0].all_day)
         entry = await self.entry()
         flow = self.flow_module.BpostOptionsFlow()
         flow.hass, flow.handler = self.hass, entry.entry_id
@@ -639,6 +641,45 @@ class AuthTest(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(vol.Invalid):
                 result['data_schema']({'retention_days': invalid})
         self.assertEqual(result['data_schema']({})['retention_days'], 7)
+
+    async def test_updates_reuse_the_brussels_zone(self):
+        from zoneinfo import ZoneInfo
+        entry = await self.entry()
+        coordinator = await self.setup_entry(entry)
+        zone = coordinator.time_zone
+        self.assertIsInstance(zone, ZoneInfo)
+        self.assertEqual(zone.key, 'Europe/Brussels')
+        self.assertIs(coordinator.mail._zone, zone)
+        calendar = importlib.import_module('custom_components.my_bpost.calendar')
+        data = self.parcel_data({'timed': 'IN_TRANSIT'})
+        data.details['timed'].eta = self.models.Eta('2026-10-25', '10:00', '12:00')
+        tracking = importlib.import_module('custom_components.my_bpost.pybpost.tracking')
+        payload = {'items': [{'itemCode': 'TEST-PARCEL', 'activeStep': {'knownProcessStep': 'IN_TRANSIT'},
+                              'expectedDeliveryTimeRange': {'time1': '2026-10-06T08:00:00Z', 'time2': '2026-10-06T10:00:00Z'}}]}
+        flow = importlib.import_module('custom_components.my_bpost.config_flow')
+        created = []
+
+        class FakeClient:
+            def __init__(self, **kwargs):
+                created.append(kwargs)
+
+            async def get_parcel(self, *_args):
+                return None
+
+            async def close(self):
+                return None
+
+        with patch('zoneinfo.ZoneInfo', side_effect=AssertionError('ZoneInfo on the event loop')), patch.object(
+                tracking, 'ZoneInfo', side_effect=AssertionError('ZoneInfo on the event loop')), patch.object(
+                self.client_module.BpostClient, 'get_mail_summary', new=AsyncMock(return_value={'isMMTSubscribed': True})), patch.object(
+                self.client_module.BpostClient, 'get_letters', new=AsyncMock(return_value=[])):
+            await coordinator.mail.async_refresh()
+            self.assertEqual(calendar.delivery_events(data, entry.entry_id, zone)[0].start.hour, 10)
+            self.assertEqual(tracking.parse_tracking(payload, 'TEST-PARCEL', time_zone=zone).eta.time1, '10:00')
+            with patch.object(flow, 'async_get_clientsession', return_value=Mock(trust_env=False)), patch.object(
+                    flow, 'PublicTrackingClient', FakeClient):
+                self.assertEqual(await flow._validate_tracking(self.hass, 'CODE', '1000', 'fr'), {})
+        self.assertIs(created[0]['time_zone'], zone)
 
     async def test_public_display_options_do_not_need_the_backend(self):
         entry = await self.entry(data={'source': 'public', 'barcode': 'synthetic-code',

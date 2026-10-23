@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, time, timedelta
-from zoneinfo import ZoneInfo
+from datetime import date, datetime, time, timedelta, tzinfo
 
 from homeassistant.components.calendar import CalendarEntity, CalendarEvent
 from homeassistant.config_entries import ConfigEntry
@@ -17,8 +16,6 @@ from .const import DOMAIN
 from .coordinator import BpostData, BpostDataUpdateCoordinator, parcel_status
 from .entity import unique_id
 from .pybpost.status import ParcelStatus
-
-BPOST_TIME_ZONE = ZoneInfo("Europe/Brussels")
 
 
 def _date(value: str | None) -> date | None:
@@ -42,7 +39,7 @@ def _time(value: str | None) -> time | None:
         return None
 
 
-def delivery_events(data: BpostData, account_id: str) -> list[CalendarEvent]:
+def delivery_events(data: BpostData, account_id: str, time_zone: tzinfo) -> list[CalendarEvent]:
     events = []
     for code, detail in data.details.items():
         # Completed/history parcels must not retain a misleading future ETA.
@@ -55,8 +52,8 @@ def delivery_events(data: BpostData, account_id: str) -> list[CalendarEvent]:
         start_time, end_time = _time(detail.eta.time1), _time(detail.eta.time2)
         start, end = day, day + timedelta(days=1)
         if start_time is not None and end_time is not None and end_time > start_time:
-            start = datetime.combine(day, start_time, BPOST_TIME_ZONE)
-            end = datetime.combine(day, end_time, BPOST_TIME_ZONE)
+            start = datetime.combine(day, start_time, time_zone)
+            end = datetime.combine(day, end_time, time_zone)
         label = (detail.receiver.name if detail.user_type == "SENDER" else detail.sender.name)
         label = label or detail.title or code
         point = detail.delivery_point
@@ -91,7 +88,10 @@ class BpostDeliveryCalendar(CoordinatorEntity[BpostDataUpdateCoordinator], Calen
 
     @property
     def _events(self) -> list[CalendarEvent]:
-        return delivery_events(self.coordinator.data or BpostData(), self._entry_id)
+        zone = self.coordinator.time_zone
+        if zone is None:
+            raise RuntimeError("Europe/Brussels was not loaded during setup")
+        return delivery_events(self.coordinator.data or BpostData(), self._entry_id, zone)
 
     @property
     def event(self) -> CalendarEvent | None:

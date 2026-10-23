@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import logging
 from typing import TYPE_CHECKING
-from zoneinfo import ZoneInfo
 
 import aiohttp
 
@@ -18,6 +17,7 @@ from .const import DOMAIN, EVENT_LETTER_ANNOUNCED
 from .entity import unique_id
 from .pybpost.exceptions import BpostAuthError, BpostError, BpostRateLimitError
 from .pybpost.mail import MailCapability, MailItem, mail_capability
+from .time_zone import async_get_bpost_time_zone
 
 if TYPE_CHECKING:
     from .coordinator import BpostDataUpdateCoordinator
@@ -40,9 +40,12 @@ class BpostMailCoordinator(DataUpdateCoordinator[MailData]):
         self.parent = parent
         self.data = MailData()
         self._seen: dict[str, float] | None = None
+        self._zone = None
         self._store = Store(self.hass, 1, f"{DOMAIN}.{self.config_entry.entry_id}.mail")
 
     async def _async_setup(self) -> None:
+        # async_refresh does not call this. Load the zone here, before any poll.
+        self._zone = await async_get_bpost_time_zone()
         stored = await self._store.async_load()
         if isinstance(stored, dict) and isinstance(stored.get("seen"), dict):
             self._seen = {key: ts for key, ts in stored["seen"].items()
@@ -67,7 +70,7 @@ class BpostMailCoordinator(DataUpdateCoordinator[MailData]):
                 self.update_interval = timedelta(hours=12)
                 self._purge_images(set())
                 return MailData(capability, last_fetch=now)
-            today = now.astimezone(ZoneInfo("Europe/Brussels")).date()
+            today = now.astimezone(self._zone).date()
             first_day = today - timedelta(days=MAIL_WINDOW_DAYS - 1)
             letters = {item.key: item for item in await self.parent.client.get_letters(first_day, today)
                        if first_day <= item.day <= today}

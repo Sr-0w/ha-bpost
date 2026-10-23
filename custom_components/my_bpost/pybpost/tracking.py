@@ -49,14 +49,21 @@ def _localized(value, lang: str) -> str | None:
     return _text(translated)
 
 
-def _instant(value) -> datetime | None:
+def _zone(time_zone: ZoneInfo | None) -> ZoneInfo:
+    """Use a zone loaded by the caller. The fallback is for standalone use."""
+    if time_zone is not None:
+        return time_zone
+    return ZoneInfo("Europe/Brussels")
+
+
+def _instant(value, time_zone: ZoneInfo | None = None) -> datetime | None:
     try:
         if isinstance(value, (int, float)) and not isinstance(value, bool):
-            return datetime.fromtimestamp(value / 1000, ZoneInfo("Europe/Brussels"))
+            return datetime.fromtimestamp(value / 1000, _zone(time_zone))
         if isinstance(value, str):
             parsed = datetime.fromisoformat(value)
             if parsed.tzinfo is not None:
-                return parsed.astimezone(ZoneInfo("Europe/Brussels"))
+                return parsed.astimezone(_zone(time_zone))
     except (ValueError, OverflowError, OSError):
         pass
     return None
@@ -72,7 +79,7 @@ def _day(value) -> str | None:
     return None
 
 
-def parse_tracking(payload, barcode: str, lang: str = "fr") -> ParcelDetail:
+def parse_tracking(payload, barcode: str, lang: str = "fr", *, time_zone: ZoneInfo | None = None) -> ParcelDetail:
     if not isinstance(payload, dict) or "error" in payload:
         raise BpostApiError("Unexpected public tracking response.")
     items = payload.get("items")
@@ -107,7 +114,7 @@ def parse_tracking(payload, barcode: str, lang: str = "fr") -> ParcelDetail:
         description=_localized(e.get("key"), lang),
         location=_text(_object(e.get("location")).get("locationName"))) for e in events[:100]]
     eta = _object(raw.get("expectedDeliveryTimeRange"))
-    start, end = _instant(eta.get("time1")), _instant(eta.get("time2"))
+    start, end = _instant(eta.get("time1"), time_zone), _instant(eta.get("time2"), time_zone)
     if start and end and start.date() == end.date() and end > start:
         detail.eta = Eta(start.date().isoformat(), start.strftime("%H:%M"), end.strftime("%H:%M"))
     return detail
@@ -116,9 +123,11 @@ def parse_tracking(payload, barcode: str, lang: str = "fr") -> ParcelDetail:
 class PublicTrackingClient:
     """One bounded public lookup; never uses login, account headers or cookies."""
 
-    def __init__(self, *, trust_env: bool = False, app_lang: str = "fr") -> None:
+    def __init__(self, *, trust_env: bool = False, app_lang: str = "fr",
+                 time_zone: ZoneInfo | None = None) -> None:
         self._trust_env = trust_env
         self._lang = app_lang
+        self.time_zone = time_zone
         self._session: aiohttp.ClientSession | None = None
         self._retry_at = 0.0
 
@@ -152,4 +161,4 @@ class PublicTrackingClient:
                 payload = json.loads(content)
         except (aiohttp.ClientError, TimeoutError, ValueError):
             raise BpostApiError("Unable to read public tracking response.") from None
-        return parse_tracking(payload, barcode, self._lang)
+        return parse_tracking(payload, barcode, self._lang, time_zone=self.time_zone)

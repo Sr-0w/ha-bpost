@@ -44,7 +44,7 @@ Live account validation is a separate check.
 ## Release checks
 
 ```sh
-python3 scripts/check_release.py --tag v0.8.1
+python3 scripts/check_release.py --tag v0.8.2
 .venv/bin/python -m unittest discover -s tests/ha -v
 ```
 
