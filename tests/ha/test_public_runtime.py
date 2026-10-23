@@ -99,6 +99,8 @@ class PublicRuntimeTest(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(result["type"],"create_entry");entry=result["result"]
                     await hass.async_block_till_done()
                     self.assertEqual(entry.state,ConfigEntryState.LOADED);login.assert_not_awaited()
+                    self.assertIs(entry.runtime_data.client.time_zone, entry.runtime_data.time_zone)
+                    self.assertEqual(entry.runtime_data.time_zone.key, "Europe/Brussels")
                     fire.assert_not_called()
                     for key in ("username","password","access_token","refresh_token"):
                         self.assertNotIn(key,entry.data)

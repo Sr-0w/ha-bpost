@@ -4,6 +4,15 @@ Published changes, newest first. Installation and migration steps live in the
 [upgrade guide](docs/installation.md#upgrading); detailed behavior is in the
 [documentation](docs/README.md).
 
+## 0.8.2 — 2026-10-23
+
+### Fixed
+
+- Load `Europe/Brussels` once during setup with Home Assistant's
+  `async_get_time_zone`, then reuse that zone for Mail Ahead, the delivery
+  calendar and public tracking. Parcel and letter updates no longer construct
+  `ZoneInfo` on the event loop.
+
 ## 0.8.1 — 2026-10-19
 
 ### Fixed

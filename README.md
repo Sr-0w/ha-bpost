@@ -11,7 +11,7 @@ individual parcels with a barcode and delivery postal code.
 Community project, not affiliated with bpost. Available in English, French, Dutch
 and German.
 
-> **Current version: 0.8.1.** Requires Home Assistant **2026.2.3+**.
+> **Current version: 0.8.2.** Requires Home Assistant **2026.2.3+**.
 
 ## What you get
 

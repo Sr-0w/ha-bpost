@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Project overview](../README.md)
 
-Requires **Home Assistant 2026.2.3+**. These guides describe version 0.8.1.
+Requires **Home Assistant 2026.2.3+**. These guides describe version 0.8.2.
 An account is optional when tracking a parcel by barcode and postal code.
 
 ## HACS

@@ -49,6 +49,16 @@ class TrackingModelsTest(unittest.TestCase):
         data['items'][0]['expectedDeliveryTimeRange']={'time1':'10:00','time2':'12:00'}
         self.assertTrue(parse_tracking(data,'TEST-PARCEL').eta.is_empty)
 
+    def test_supplied_zone_is_reused_for_eta(self):
+        from zoneinfo import ZoneInfo
+        zone = ZoneInfo("Europe/Brussels")
+        data = payload()
+        data["items"][0]["expectedDeliveryTimeRange"] = {
+            "time1": "2026-10-06T08:00:00Z", "time2": "2026-10-06T10:00:00Z"}
+        with patch("pybpost.tracking.ZoneInfo", side_effect=AssertionError("tzdata read")):
+            eta = parse_tracking(data, "TEST-PARCEL", time_zone=zone).eta
+        self.assertEqual((eta.day, eta.time1, eta.time2), ("2026-10-06", "10:00", "12:00"))
+
     def test_empty_malformed_and_identity_mismatch_are_distinct(self):
         with self.assertRaises(BpostTrackingNotFound): parse_tracking({'items':[]},'TEST-PARCEL')
         for value in ([],{}, {'items':None},{'error':'private-body'}, {'items':[{}]},payload('OTHER')):
@@ -116,3 +126,14 @@ class TrackingClientTest(unittest.IsolatedAsyncioTestCase):
     async def test_not_found_is_not_an_http_failure(self):
         self.body='{"items":[]}'
         with self.assertRaises(BpostTrackingNotFound):await self.client.get_parcel('TEST-PARCEL','1000')
+
+    async def test_configured_zone_is_reused_while_parsing(self):
+        from zoneinfo import ZoneInfo
+        data = payload()
+        data["items"][0]["expectedDeliveryTimeRange"] = {
+            "time1": "2026-10-06T08:00:00Z", "time2": "2026-10-06T10:00:00Z"}
+        self.body = json.dumps(data)
+        self.client.time_zone = ZoneInfo("Europe/Brussels")
+        with patch("pybpost.tracking.ZoneInfo", side_effect=AssertionError("tzdata read")):
+            detail = await self.client.get_parcel("TEST-PARCEL", "1000")
+        self.assertEqual((detail.eta.day, detail.eta.time1, detail.eta.time2), ("2026-10-06", "10:00", "12:00"))
