@@ -1,6 +1,6 @@
 # My bpost for Home Assistant
 
-[![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![HACS](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![Release](https://img.shields.io/github/v/release/Sr-0w/ha-bpost?include_prereleases)](https://github.com/Sr-0w/ha-bpost/releases)
 [![Validate](https://github.com/Sr-0w/ha-bpost/actions/workflows/validate.yml/badge.svg)](https://github.com/Sr-0w/ha-bpost/actions/workflows/validate.yml)
 
@@ -29,11 +29,15 @@ See the [documentation](docs/README.md) for availability and limitations.
 
 ## Install with HACS
 
-1. Open **HACS → Custom repositories** and add
-   `https://github.com/Sr-0w/ha-bpost` as an **Integration**.
-2. Install **My bpost** and restart Home Assistant.
+1. Open **HACS**, search for **My bpost** and download it.
+2. Restart Home Assistant.
 3. Go to **Settings → Devices & services → Add integration → My bpost**.
 4. Choose your **My bpost account**, **a parcel without an account**, or **bulk import**.
+
+If **My bpost** does not show up in the HACS search yet, or you prefer to add it
+manually, use it as a custom repository instead: open **HACS → Custom repositories**
+and add `https://github.com/Sr-0w/ha-bpost` as an **Integration**, then install
+**My bpost** and continue from step 2.
 
 [![Open this repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Sr-0w&repository=ha-bpost&category=integration)
 
