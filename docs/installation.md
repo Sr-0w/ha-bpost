@@ -7,11 +7,15 @@ An account is optional when tracking a parcel by barcode and postal code.
 
 ## HACS
 
-1. In HACS, open the ⋮ menu → **Custom repositories**, add
-   `https://github.com/Sr-0w/ha-bpost` with category **Integration**.
-2. Install **My bpost** and restart Home Assistant.
+1. In HACS, search for **My bpost** and download it.
+2. Restart Home Assistant.
 3. Go to Settings → Devices & Services → Add Integration → **My bpost**,
    choose **My bpost account**, and enter your email + password.
+
+If **My bpost** does not show up in the HACS search yet, add it as a custom
+repository instead: in HACS, open the ⋮ menu → **Custom repositories**, add
+`https://github.com/Sr-0w/ha-bpost` with category **Integration**, then install
+**My bpost** and continue from step 2.
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Sr-0w&repository=ha-bpost&category=integration)
 
